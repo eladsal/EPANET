@@ -7,6 +7,7 @@ VERSION:    2.00
 DATE:       5/8/00
             10/25/00
             3/1/01
+            3/29/06
 AUTHOR:     L. Rossman
             US EPA - NRMRL
 
@@ -38,6 +39,8 @@ AUTHOR:     L. Rossman
 #define EN_PRESSURE     11
 #define EN_QUALITY      12
 #define EN_SOURCEMASS   13
+
+#define EN_INITVOLUME   14
 
 #define EN_DIAMETER     0    /* Link parameters */
 #define EN_LENGTH       1

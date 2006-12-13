@@ -7,7 +7,8 @@ VERSION:    2.00
 DATE:       5/8/00
             9/7/00
             10/25/00
-            3/1/01                                          
+            3/1/01
+            3/29/06                                          
 AUTHOR:     L. Rossman
             US EPA - NRMRL
                                                                     
@@ -471,7 +472,12 @@ int  newpremise(int logop)
    else
    {
       if (!getfloat(Tok[Ntokens-1],&x)) return(202);
+
+/*** Updated 3/29/06 ***/
+      if (v == r_FILLTIME || v == r_DRAINTIME) x = x*3600.0;
    }
+
+   
          
    /* Create new premise structure */
    p = (struct Premise *) malloc(sizeof(struct Premise));

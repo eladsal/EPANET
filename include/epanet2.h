@@ -3,7 +3,7 @@
 **
 ** C/C++ header file for EPANET Programmers Toolkit
 **
-** Last updated on 3/1/01
+** Last updated on 3/29/06
 */
 
 #ifndef EPANET2_H
@@ -24,6 +24,8 @@
 #define EN_PRESSURE     11
 #define EN_QUALITY      12
 #define EN_SOURCEMASS   13
+
+#define EN_INITVOLUME   14
 
 #define EN_DIAMETER     0    /* Link parameters */
 #define EN_LENGTH       1

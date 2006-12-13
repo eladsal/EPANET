@@ -11,6 +11,8 @@ DATE:       6/5/00
             3/1/01
             11/19/01
             6/24/02
+            2/10/05
+            5/10/06
 AUTHOR:     L. Rossman
             US EPA - NRMRL
                                                                    
@@ -134,7 +136,7 @@ void inithyd(int initflag)
 
       /* Start active PRVs & PSVs in OPEN position */
       if (
-           (Link[i].Type == PRV || Link[i].Type == PSV)
+           (Link[i].Type == PRV || Link[i].Type == PSV || Link[i].Type == FCV)
             && (Link[i].Kc != MISSING)
          ) S[i] = OPEN;
 
@@ -507,7 +509,10 @@ void  resistance(int k)
 {
    float e,d,L;
    Link[k].R = CSMALL;
-   if (Link[k].Type == PIPE || Link[k].Type == CV)
+
+/*** Updated 5/10/06 ***/ 
+//   if (Link[k].Type == PIPE || Link[k].Type == CV)
+
    switch (Link[k].Type)
    {
 
@@ -2199,7 +2204,10 @@ void  gpvcoeff(int k)
       /* Compute inverse headloss gradient (P) and flow  */
       /* correction factor (Y) using formulas for pumps. */
       P[k] = 1.0 / MAX(r,RQtol);
-      Y[k] = Q[k] + P[k]*h0;
+
+/*** Updated 5/10/06 ***/
+      //Y[k] = Q[k] + P[k]*h0;
+      Y[k] = P[k]*(h0 + r*Q[k]);
    }
 }
  
@@ -2272,6 +2280,7 @@ void  prvcoeff(int k, int n1, int n2)
 {
    int   i,j;                       /* Rows of solution matrix */
    float hset;                      /* Valve head setting      */
+
    i  = Row[n1];                    /* Matrix rows of nodes    */
    j  = Row[n2];
    hset   = Node[n2].El + K[k];     /* Valve setting           */
@@ -2284,10 +2293,10 @@ void  prvcoeff(int k, int n1, int n2)
          newflows()) equal to flow imbalance at downstream node. 
       */
       P[k] = 0.0;
-      Y[k] = Q[k] + X[n2];       /* Force flow balance   */
-      F[j] += (hset*CBIG);       /* Force head = hset    */
-      Aii[j] += CBIG;            /*   at downstream node */
+      Y[k] = Q[k] + X[n2];          /* Force flow balance   */
       if (X[n2] < 0.0) F[i] += X[n2];
+      F[j] += (hset*CBIG);          /* Force head = hset    */
+      Aii[j] += CBIG;               /*   at downstream node */
       return;
    }
    /* 
@@ -2363,6 +2372,7 @@ void  fcvcoeff(int k, int n1, int n2)
 {
    int   i,j;                   /* Rows in solution matrix */
    float q;                     /* Valve flow setting      */
+
    q = K[k];
    i = Row[n1];
    j = Row[n2];
@@ -2378,7 +2388,15 @@ void  fcvcoeff(int k, int n1, int n2)
       F[i] -= q;
       X[n2] += q;
       F[j] += q;
-      P[k] = 0.0;
+
+      /*** Updated 2/10/05 ***/
+      //P[k] = 0.0;
+      P[k] = 1.0/CBIG;
+      Aij[Ndx[k]] -= P[k];
+      Aii[i] += P[k];
+      Aii[j] += P[k];
+      /**********************/
+
       Y[k] = Q[k] - q;
    }
    /*
@@ -2394,7 +2412,6 @@ void  fcvcoeff(int k, int n1, int n2)
       F[j] -= (Y[k]-Q[k]);
    }
 }                        /* End of fcvcoeff */
-
 
 /****************  END OF HYDRAUL.C  ***************/
 

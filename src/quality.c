@@ -7,6 +7,7 @@ VERSION:    2.00
 DATE:       5/29/00
             9/7/00
             10/25/00
+            12/8/04
 AUTHOR:     L. Rossman
             US EPA - NRMRL
                                                                       
@@ -904,8 +905,13 @@ void release(long dt)
       if ( (seg = LastSeg[k]) != NULL)
       {
 
-         /* Quality is the same, so just add flow volume to last seg */
-         if (ABS(seg->c - c) < Ctol) seg->v += v;
+         /*** Updated 12/8/04 ***/
+         /* Quality of seg close to that of node */
+         if (ABS(seg->c - c) < Ctol)
+         {
+            seg->c = (seg->c*seg->v + c*v) / (seg->v + v);     
+            seg->v += v;
+         }
 
          /* Otherwise add a new seg to end of link */
          else addseg(k,v,c);

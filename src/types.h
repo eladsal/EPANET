@@ -10,6 +10,7 @@ DATE:       5/8/00
             3/1/01
             12/6/01
             6/24/02
+            3/29/06
 AUTHOR:     L. Rossman                                         
             US EPA - NRMRL
                                                                      
@@ -20,8 +21,8 @@ AUTHOR:     L. Rossman
    Global Constants
 -----------------------------
 */
-/*** Updated 6/24/02 ***/
-#define   CODEVERSION        20010
+/*** Updated 3/29/06 ***/
+#define   CODEVERSION        20011
 
 #define   MAGICNUMBER        516114521
 #define   VERSION            200

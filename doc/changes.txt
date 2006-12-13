@@ -1,0 +1,29 @@
+EPANET Change Log
+=================
+
+Release 2.00.11
+---------------
+DATE      CODE MODULES  CHANGES
+===============================================================================
+3/29/06   EPANET2.H,    EN_INITVOLUME added to list of node parameters.
+          TOOLKIT.H
+-------------------------------------------------------------------------------
+3/29/06	  EPANET.C      code added to return a value for EN_INITVOLUME in
+                        function ENgetnodevalue.
+--------------------------------------------------------------------------------
+3/29/06   RULES.C       the input values for a tank's FILLTIME or DRAINTIME 
+                        in a rule premise are now converted to seconds in the
+			newpremise() function.
+--------------------------------------------------------------------------------
+3/29/06   TYPES.H       changed code version to 20011.
+-------------------------------------------------------------------------------
+5/10/06   HYDRAUL.C     removed extraneous "if" statement from resistance();
+                        corrected value of Y-coefficient set in gpvcoeff().
+-------------------------------------------------------------------------------
+2/10/05   HYDRAUL.C     corrected value for P-coefficient set in fcvcoeff().
+-------------------------------------------------------------------------------
+12/8/04   QUALITY.C     in release() function, the upstream node quality is now
+                        mixed together with that of the upstream pipe segment
+			when the quality difference between the two is less
+			than the CTOL tolerance.
+-------------------------------------------------------------------------------

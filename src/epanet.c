@@ -9,6 +9,8 @@ DATE:       5/30/00
             10/25/00
             3/1/01
             11/19/01
+            6/24/02
+            3/29/06
 AUTHOR:     L. Rossman
             US EPA - NRMRL
 
@@ -1351,6 +1353,12 @@ int DLLEXPORT ENgetnodevalue(int index, int code, float *value)
          *value = (Tank[index-Njuncs].H0 - Node[index].El)*Ucf[ELEV];
          break;
 
+/*** Updated 3/29/06 ***/
+      case EN_INITVOLUME:
+         *value = 0.0;
+         if ( index > Njuncs) *value = Tank[index-Njuncs].V0*Ucf[VOLUME];
+         break;
+         
       case EN_DEMAND:
          *value = D[index]*Ucf[FLOW];
          break;

@@ -1795,6 +1795,10 @@ int  valvecheck(int type, int j1, int j2)
       /* nor have PRV connected to upstream node of FCV */
       if (vtype == FCV && type == PSV && vj2 == j1) return(0);
       if (vtype == FCV && type == PRV && vj1 == j2) return(0);
+
+/*** Updated 4/14/05 ***/
+      if (vtype == PSV && type == FCV && vj1 == j2) return (0);
+      if (vtype == PRV && type == FCV && vj2 == j1) return (0);
    }
    return(1);
 }                   /* End of valvecheck */
