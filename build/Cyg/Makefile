@@ -1,0 +1,152 @@
+# Cygwin/MinGW Makefile for EPANET
+
+# This will build EPANET as a native windows DLL and import
+# library (epanet-gcc.dll/libepanet-gcc.dll.a) under Cygwin/MinGW,
+# and a standalone executable (epanet-gcc.exe) that is linked
+# to this import library.
+# This makefile also creates a windows batch file
+# (see MScmdname below) that will produce an import
+# library for linking the DLL using MSVC.
+# This makefile assumes a Cygwin environment with minimal
+# MinGW installation, and uses the MinGW gcc compiler from
+# the MinGW install directory.
+# The current release of MinGW can be obtained from
+# http://sourceforge.net/project/showfiles.php?group_id=2435
+# The current release of the Cygwin environment can be
+# obtained from http://www.cygwin.com
+
+# The following targets are defined (for execution in
+# the build directory under the Cygwin environment):
+# make
+#     -Builds epanet-gcc.dll, epanet-gcc.def, libepanet-gcc.dll.a,
+#      epanet-gcc.exe
+# make install
+#     -Creates shell wrappers runepanet.sh and CreateMSLib.bat that
+#      execute epanet-gcc.exe, and MSVC 'lib' (to create an MSVC
+#      import library).  The runepanet.sh wrapper simply exports
+#      environment variables so that the DLL is found at runtime,
+#      allowing you to specify your own locations for installing
+#      the DLL.
+#     -Installs epanet-gcc.dll, epanet-gcc.exe, and runepanet.sh
+#      in <prefix>/bin, where <prefix> defaults to ~ (and can be set
+#      below to something different - see "Install directories")
+#     -Installs libepanet-gcc.dll.a (import library), epanet-gcc.def,
+#      and CreateMSLib.bat in <prefix>/lib
+#     -Installs epanet2.h in <prefix>/include.  This is the required
+#      header file for the EPANET programmer's toolkit, and thus
+#      <prefix>/include should be on your CPP include search path
+#      for subsequent use of the toolkit and linking with the import
+#      library libepanet-gcc.dll.a.
+# make clean
+#     -Removes object and library files, returning the build directory
+#      to its pristine state.
+# make uninstall
+#     -Undoes 'make install'
+# make check
+#     -Checks the installation by running epanet-gcc.exe against defined
+#      test networks and comparing the results quantitatively to a database
+#      of known correct results.  Reports comparison statistics and
+#      pass/fail status for each test.
+
+SHELL = /bin/sh
+
+# C H A N G E  H E R E  A S  N E E D E D
+# Change (as needed) the MinGW install directory below.
+# Change (as needed) the location off the MS LIB tool.
+# You may also wish to change the install path 'prefix',
+# or the compiler flags, but these defaults should be fine.
+
+# MinGW top level install directory, accessible from build environment
+MinGWdir = /cygdrive/c/MinGW
+# Microsoft lib tool directory (for creating an MS import library)
+MSVClibexe = c:\\Program Files\\Microsoft Visual Studio .NET 2003\\Vc7\\bin\\lib
+
+# Target filenames
+epanetrootname = epanet-gcc
+dllname = $(epanetrootname).dll
+defname = $(epanetrootname).def
+implibname = lib$(dllname).a
+exename = $(epanetrootname).exe
+# Shell wrapper
+runcmdname = runepanet.sh
+# MSVC import lib batch file
+MScmdname = CreateMSLib.bat
+# Location of EPANET toolkit includes
+epanetincludedir = ../../include
+# Search path for sources
+epanetsrcdir = ../../src
+VPATH = $(epanetsrcdir)
+
+# Install directories
+prefix = ~
+exec_prefix = $(prefix)
+srcdir = .
+libdir = $(exec_prefix)/lib
+bindir = $(exec_prefix)/bin
+includedir = $(prefix)/include
+datarootdir = $(prefix)/share
+docdir = $(datarootdir)/doc/epanet
+
+# Compiler and flags
+# MinGW gcc
+CC = $(MinGWdir)/bin/gcc
+dlltool = $(MinGWdir)/bin/dlltool
+CFLAGS = -g -O
+CPPFLAGS = -I $(srcdir) -I $(epanetincludedir)
+LDFLAGS = -L . -W1,-rpath,$(libdir)
+
+# Installer
+INSTALL = install
+INSTALL_PROGRAM = $(INSTALL)
+INSTALL_DATA = $(INSTALL) -m 644
+
+# Files for the shared object library
+epanet_objs=toolkit.o hash.o hydraul.o inpfile.o input1.o input2.o \
+	    input3.o mempool.o output.o quality.o report.o \
+	    rules.o smatrix.o
+# Epanet main program
+epanet_main_obj=epanet.o
+# Epanet header files
+epanet_heads=enumstxt.h funcs.h hash.h mempool.h text.h toolkit.h types.h vars.h
+# Epanet main program header files
+epanet_main_heads = $(epanetincludedir)/epanet2.h
+
+.PHONY: all
+all: $(dllname) $(exename)
+
+$(dllname): $(epanet_objs)
+	$(CC) $(CFLAGS) $(LDFLAGS) -shared -o $@ $^ -Wl,--output-def,$(defname)
+	$(CC) $(CFLAGS) $(LDFLAGS) -shared -o $@ $^ -Wl,--kill-at
+	$(dlltool) -d $(defname) --dllname $@ --output-lib $(implibname) --kill-at
+
+$(exename): $(epanet_main_obj) $(dllname) $(epanet_main_heads)
+	$(CC) $(CFLAGS) $(LDFLAGS) $< -l$(dllname) -o $@
+
+$(epanet_objs): $(epanet_heads)
+
+.PHONY: install
+install:
+	cat $(runcmdname).template | sed 's|libdir|$(libdir)|' \
+                                | sed 's|exename|$(bindir)/$(exename)|' \
+                                > $(runcmdname)
+	cat $(MScmdname).template | sed 's|MSVClibexe|$(MSVClibexe)|' \
+                                | sed 's|defname|$(defname)|' \
+                                | sed 's|libdir|$(libdir)|' \
+                                > $(MScmdname)
+	$(INSTALL_PROGRAM) -D $(exename) $(bindir)/$(exename)
+	$(INSTALL_PROGRAM) -D $(dllname) $(bindir)/$(dllname)
+	$(INSTALL_PROGRAM) -D $(defname) $(libdir)/$(defname)
+	$(INSTALL_PROGRAM) -D $(implibname) $(libdir)/$(implibname)
+	$(INSTALL_DATA) -D $(epanetincludedir)/epanet2.h $(includedir)/epanet2.h
+	$(INSTALL_PROGRAM) -D $(runcmdname) $(bindir)/$(runcmdname)
+	$(INSTALL_PROGRAM) -D $(MScmdname) $(libdir)/$(MScmdname)
+
+.PHONY: uninstall
+uninstall:
+
+.PHONY: check
+check:
+
+.PHONY: clean
+clean:
+	-/bin/rm *.o $(dllname) $(defname) $(implibname) $(exename) $(runcmdname) $(MScmdname)

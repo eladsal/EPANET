@@ -107,7 +107,7 @@
 #define EN_TIMEOFDAY    3
 
 #define EN_AVERAGE      1   /* Time statistic types.    */
-#define EN_MINIMUM      2 
+#define EN_MINIMUM      2
 #define EN_MAXIMUM      3
 #define EN_RANGE        4
 
@@ -121,9 +121,13 @@
 #ifdef __cplusplus
 #define EXTERN extern "C"
 #else
-#define EXTERN extern 
+#define EXTERN extern
 #endif
+#ifdef WIN32
 #define CALLTYPE __stdcall
+#else
+#define CALLTYPE
+#endif
 
 EXTERN int   CALLTYPE ENepanet(char *, char *, char *, void (*) (char *));
 EXTERN int   CALLTYPE ENopen(char *, char *, char *);

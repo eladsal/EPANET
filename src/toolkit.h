@@ -14,7 +14,7 @@ AUTHOR:     L. Rossman
 *******************************************************************
 */
 
-#ifdef DLL
+#ifdef WIN32
   #ifdef __cplusplus
   #define DLLEXPORT extern "C" __declspec(dllexport) __stdcall
   #else
@@ -201,4 +201,3 @@ AUTHOR:     L. Rossman
  int  DLLEXPORT ENsetoption(int, float);
  int  DLLEXPORT ENsetstatusreport(int);
  int  DLLEXPORT ENsetqualtype(int, char *, char *, char *);
-
