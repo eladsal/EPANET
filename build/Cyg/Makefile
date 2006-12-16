@@ -1,9 +1,11 @@
 # Cygwin/MinGW Makefile for EPANET
 
 # This will build EPANET as a native windows DLL and import
-# library (epanet-gcc.dll/libepanet-gcc.dll.a) under Cygwin/MinGW,
-# and a standalone executable (epanet-gcc.exe) that is linked
+# library (epanet-gcc-<Rev>.dll/libepanet-gcc-<Rev>.dll.a) under Cygwin/MinGW,
+# and a standalone executable (epanet-gcc-<Rev>.exe) that is linked
 # to this import library.
+# <Rev> is the atomic revision number of the EPANET SVN repo,
+# so the results of each build can be unambiguously tracked to a repo Rev.
 # This makefile also creates a windows batch file
 # (see MScmdname below) that will produce an import
 # library for linking the DLL using MSVC.
@@ -18,32 +20,32 @@
 # The following targets are defined (for execution in
 # the build directory under the Cygwin environment):
 # make
-#     -Builds epanet-gcc.dll, epanet-gcc.def, libepanet-gcc.dll.a,
-#      epanet-gcc.exe
+#     -Builds epanet-gcc-<Rev>.dll, epanet-gcc-<Rev>.def, libepanet-gcc-<Rev>.dll.a,
+#      epanet-gcc-<Rev>.exe
 # make install
-#     -Creates shell wrappers runepanet.sh and CreateMSLib.bat that
-#      execute epanet-gcc.exe, and MSVC 'lib' (to create an MSVC
-#      import library).  The runepanet.sh wrapper simply exports
+#     -Creates shell wrappers runepanet-<Rev>.sh and CreateMSLib-<Rev>.bat that
+#      execute epanet-gcc-<Rev>.exe, and MSVC 'lib' (to create an MSVC
+#      import library).  The runepanet-<Rev>.sh wrapper simply exports
 #      environment variables so that the DLL is found at runtime,
 #      allowing you to specify your own locations for installing
 #      the DLL.
-#     -Installs epanet-gcc.dll, epanet-gcc.exe, and runepanet.sh
+#     -Installs epanet-gcc-<Rev>.dll, epanet-gcc-<Rev>.exe, and runepanet-<Rev>.sh
 #      in <prefix>/bin, where <prefix> defaults to ~ (and can be set
 #      below to something different - see "Install directories")
-#     -Installs libepanet-gcc.dll.a (import library), epanet-gcc.def,
-#      and CreateMSLib.bat in <prefix>/lib
+#     -Installs libepanet-gcc-<Rev>.dll.a (import library), epanet-gcc-<Rev>.def,
+#      and CreateMSLib-<Rev>.bat in <prefix>/lib
 #     -Installs epanet2.h in <prefix>/include.  This is the required
 #      header file for the EPANET programmer's toolkit, and thus
 #      <prefix>/include should be on your CPP include search path
 #      for subsequent use of the toolkit and linking with the import
-#      library libepanet-gcc.dll.a.
+#      library libepanet-gcc-<Rev>.dll.a.
 # make clean
 #     -Removes object and library files, returning the build directory
 #      to its pristine state.
 # make uninstall
 #     -Undoes 'make install'
 # make check
-#     -Checks the installation by running epanet-gcc.exe against defined
+#     -Checks the installation by running EPANET against defined
 #      test networks and comparing the results quantitatively to a database
 #      of known correct results.  Reports comparison statistics and
 #      pass/fail status for each test.
@@ -62,15 +64,19 @@ MinGWdir = /cygdrive/c/MinGW
 MSVClibexe = c:\\Program Files\\Microsoft Visual Studio .NET 2003\\Vc7\\bin\\lib
 
 # Target filenames
-epanetrootname = epanet-gcc
-dllname = $(epanetrootname).dll
-defname = $(epanetrootname).def
+# svnname.sh constructs a name: <prefix><root><Rev><postfix>
+# where <Rev> is the atomic revision number of the svn repo.
+epanetrootname = $(shell ../svnname.sh "" epanet-gcc- "")
+dllname := $(epanetrootname).dll
+defname := $(epanetrootname).def
 implibname = lib$(dllname).a
-exename = $(epanetrootname).exe
+exename := $(epanetrootname).exe
 # Shell wrapper
-runcmdname = runepanet.sh
+runcmdtemplate = runepanet.sh.template
+runcmdname = $(shell ../svnname.sh "" runepanet- .sh)
 # MSVC import lib batch file
-MScmdname = CreateMSLib.bat
+MScmdtemplate = CreateMSLib.bat.template
+MScmdname = $(shell ../svnname.sh "" CreateMSLib- .bat)
 # Location of EPANET toolkit includes
 epanetincludedir = ../../include
 # Search path for sources
@@ -126,10 +132,10 @@ $(epanet_objs): $(epanet_heads)
 
 .PHONY: install
 install:
-	cat $(runcmdname).template | sed 's|libdir|$(libdir)|' \
+	cat $(runcmdtemplate) | sed 's|libdir|$(libdir)|' \
                                 | sed 's|exename|$(bindir)/$(exename)|' \
                                 > $(runcmdname)
-	cat $(MScmdname).template | sed 's|MSVClibexe|$(MSVClibexe)|' \
+	cat $(MScmdtemplate) | sed 's|MSVClibexe|$(MSVClibexe)|' \
                                 | sed 's|defname|$(defname)|' \
                                 | sed 's|libdir|$(libdir)|' \
                                 > $(MScmdname)

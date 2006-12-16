@@ -1,33 +1,33 @@
 # Linux Makefile for EPANET
 
-# This will build EPANET as a shared object library (libepanet-gcc.so)
-# under Linux/Unix,  and a standalone executable (epanet-gcc) that is
-# linked  to this library.
+# This will build EPANET as a shared object library
+# (libepanet-gcc-<Rev>.so) under Linux/Unix, and a standalone
+# executable (epanet-gcc-<Rev>) that is linked to this library.
 
 # The following targets are defined:
 # make
-#     -Builds libepanet-gcc.so, epanet-gcc
+#     -Builds libepanet-gcc-<Rev>.so, epanet-gcc-<Rev>
 # make install
-#     -Creates shell wrapper runepanet.sh that executes epanet-gcc.exe.
-#      The runepanet.sh wrapper simply exports
+#     -Creates shell wrapper runepanet-<Rev>.sh that executes epanet-gcc-<Rev>.exe.
+#      The runepanet-<Rev>.sh wrapper simply exports
 #      environment variables that help locate the runtime library,
 #      allowing you to specify your own library locations.
-#     -Installs epanet-gcc and runepanet.sh
+#     -Installs epanet-gcc-<Rev> and runepanet-<Rev>.sh
 #      in <prefix>/bin, where <prefix> defaults to ~ (and can be set
 #      below to something different - see "Install directories")
-#     -Installs libepanet-gcc.so in <prefix>/lib
+#     -Installs libepanet-gcc-<Rev>.so in <prefix>/lib
 #     -Installs epanet2.h in <prefix>/include.  This is the required
 #      header file for the EPANET programmer's toolkit, and thus
 #      <prefix>/include should be on your CPP include search path
 #      for subsequent use of the toolkit and linking with the
-#      library libepanet-gcc.so
+#      library libepanet-gcc-<Rev>.so
 # make clean
 #     -Removes object and library files, returning the build directory
 #      to its pristine state.
 # make uninstall
 #     -Undoes 'make install'
 # make check
-#     -Checks the installation by running epanet-gcc against defined
+#     -Checks the installation by running EPANET against defined
 #      test networks and comparing the results quantitatively to a database
 #      of known correct results.  Reports comparison statistics and
 #      pass/fail status for each test.
@@ -38,11 +38,14 @@
 SHELL = /bin/sh
 
 # Target filenames
-epanetrootname = epanet-gcc
-libname = lib$(epanetrootname).so
-exename = $(epanetrootname)
+# svnname.sh constructs a name: <prefix><root><Rev><postfix>
+# where <Rev> is the atomic revision number of the svn repo.
+epanetrootname = $(shell ../svnname.sh "" epanet-gcc- "")
+libname := lib$(epanetrootname).so
+exename := $(epanetrootname)
 # Shell wrapper
-runcmdname = runepanet.sh
+runcmdtemplate = runepanet.sh.template
+runcmdname = $(shell ../svnname.sh "" runepanet- .sh)
 # Location of EPANET toolkit includes
 epanetincludedir = ../../include
 # Search path for sources
@@ -94,9 +97,9 @@ $(epanet_objs): $(epanet_heads)
 
 .PHONY: install
 install:
-	cat $(runcmdname).template | sed 's|libdir|$(libdir)|' \
-                                | sed 's|exename|$(bindir)/$(exename)|' \
-                                > $(runcmdname)
+	cat $(runcmdtemplate) | sed 's|libdir|$(libdir)|' \
+                       | sed 's|exename|$(bindir)/$(exename)|' \
+                       > $(runcmdname)
 	$(INSTALL_PROGRAM) -D $(exename) $(bindir)/$(exename)
 	$(INSTALL_PROGRAM) -D $(libname) $(libdir)/$(libname)
 	$(INSTALL_DATA) -D $(epanetincludedir)/epanet2.h $(includedir)/epanet2.h
