@@ -1,3 +1,3 @@
 #!/bin/bash
-SVNREV=`svn info | grep Revision | awk -F": " '{print $2}'`
-echo $1$2${SVNREV}$3
+SVNREV=`svn info "$1" | grep Revision | awk -F": " '{print $2}'`
+echo $2$3${SVNREV}$4
