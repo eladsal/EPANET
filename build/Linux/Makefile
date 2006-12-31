@@ -66,7 +66,7 @@ docdir = $(datarootdir)/doc/epanet
 # Compiler and flags
 CC = gcc
 CFLAGS = -g -O -fPIC
-CPPFLAGS = -I $(srcdir) -I $(epanetincludedir)
+CPPFLAGS = -I $(srcdir) -I $(epanetincludedir) -DENSILENT
 LDFLAGS = -L . -W1,-rpath,$(libdir) -lm
 
 # Installer

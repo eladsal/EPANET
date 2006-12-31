@@ -2663,9 +2663,11 @@ void  writecon(char *s)
 **----------------------------------------------------------------
 */
 {
+#ifndef ENSILENT
 #ifndef WIN32
    fprintf(stdout,s);
    fflush(stdout);
+#endif
 #endif
 }
 

@@ -102,7 +102,7 @@ docdir = $(datarootdir)/doc/epanet
 CC = $(MinGWdir)/bin/gcc
 dlltool = $(MinGWdir)/bin/dlltool
 CFLAGS = -g -O
-CPPFLAGS = -I $(srcdir) -I $(epanetincludedir)
+CPPFLAGS = -I $(srcdir) -I $(epanetincludedir) -DENSILENT
 LDFLAGS = -L . -W1,-rpath,$(libdir)
 
 # Installer
