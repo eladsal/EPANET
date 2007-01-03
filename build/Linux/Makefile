@@ -49,9 +49,11 @@ runcmdtemplate = runepanet.sh.template
 runcmdname = $(shell ../svnname.sh $(epanetsvnpath) "" runepanet_ .sh)
 # Location of EPANET toolkit includes
 epanetincludedir = ../../include
+epanetcommondir = ../../common
 # Search path for sources
 epanetsrcdir = ../../src
-VPATH = $(epanetsrcdir)
+commonsrcdir = ../../common
+VPATH = $(epanetsrcdir):$(commonsrcdir)
 
 # Install directories
 prefix = ~
@@ -66,7 +68,7 @@ docdir = $(datarootdir)/doc/epanet
 # Compiler and flags
 CC = gcc
 CFLAGS = -g -O -fPIC
-CPPFLAGS = -I $(srcdir) -I $(epanetincludedir) -DENSILENT
+CPPFLAGS = -I $(srcdir) -I $(epanetincludedir) -I $(epanetcommondir) -DENSILENT
 LDFLAGS = -L . -W1,-rpath,$(libdir) -lm
 
 # Installer

@@ -80,9 +80,11 @@ MScmdtemplate = CreateMSLib.bat.template
 MScmdname = $(shell ../svnname.sh $(epanetsvnpath) "" CreateMSLib_ .bat)
 # Location of EPANET toolkit includes
 epanetincludedir = ../../include
+epanetcommondir = ../../common
 # Search path for sources
 epanetsrcdir = ../../src
-VPATH = $(epanetsrcdir)
+commonsrcdir = ../../common
+VPATH = $(epanetsrcdir):$(commonsrcdir)
 
 # Install directories
 winprefix = $(shell cygpath -w $$HOME)
@@ -102,7 +104,7 @@ docdir = $(datarootdir)/doc/epanet
 CC = $(MinGWdir)/bin/gcc
 dlltool = $(MinGWdir)/bin/dlltool
 CFLAGS = -g -O
-CPPFLAGS = -I $(srcdir) -I $(epanetincludedir) -DENSILENT
+CPPFLAGS = -I $(srcdir) -I $(epanetincludedir) -I $(epanetcommondir) -DENSILENT
 LDFLAGS = -L . -W1,-rpath,$(libdir)
 
 # Installer
@@ -138,7 +140,7 @@ $(epanet_objs): $(epanet_heads)
 
 .PHONY: install
 install:
-	cat $(runcmdtemplate) | sed 's|libdir|$(libdir)|' \
+	cat $(runcmdtemplate) | sed 's|libdir|$(bindir)|' \
                                 | sed 's|exename|$(bindir)/$(exename)|' \
                                 > $(runcmdname)
 	cat $(MScmdtemplate) | sed 's|MSVClibexe|$(MSVClibexe)|' \

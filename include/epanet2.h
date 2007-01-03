@@ -193,4 +193,7 @@ EXTERN int   CALLTYPE ENsetoption(int, float);
 EXTERN int   CALLTYPE ENsetstatusreport(int);
 EXTERN int   CALLTYPE ENsetqualtype(int, char *, char *, char *);
 
+#undef EXTERN
+#undef CALLTYPE
+
 #endif
