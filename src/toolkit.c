@@ -79,7 +79,9 @@ void (* viewprog) (char *);     /* Pointer to progress viewing function */
 */
 
 #ifdef WIN32
+#ifdef __BORLANDC__
 #pragma argsused
+#endif
 int WINAPI DllEntryPoint(HINSTANCE hinst, unsigned long reason, void* reserved)
 {
         viewprog = NULL;

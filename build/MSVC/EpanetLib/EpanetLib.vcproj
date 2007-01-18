@@ -19,6 +19,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
+				AdditionalIncludeDirectories="&quot;C:\Documents and Settings\james\My Documents\ENGCVS\EPANET\BASE\trunk\common&quot;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;EPANETLIB_EXPORTS;ENSILENT"
 				MinimalRebuild="TRUE"
 				BasicRuntimeChecks="3"
@@ -68,6 +69,7 @@
 			CharacterSet="2">
 			<Tool
 				Name="VCCLCompilerTool"
+				AdditionalIncludeDirectories="&quot;C:\Documents and Settings\james\My Documents\ENGCVS\EPANET\BASE\trunk\common&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;EPANETLIB_EXPORTS;ENSILENT"
 				RuntimeLibrary="0"
 				UsePrecompiledHeader="0"
@@ -135,7 +137,7 @@
 				RelativePath="..\..\..\src\input3.c">
 			</File>
 			<File
-				RelativePath="..\..\..\src\mempool.c">
+				RelativePath="..\..\..\common\mempool.c">
 			</File>
 			<File
 				RelativePath="..\..\..\src\output.c">
@@ -170,7 +172,7 @@
 				RelativePath="..\..\..\src\hash.h">
 			</File>
 			<File
-				RelativePath="..\..\..\src\mempool.h">
+				RelativePath="..\..\..\common\mempool.h">
 			</File>
 			<File
 				RelativePath=".\stdafx.h">
