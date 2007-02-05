@@ -166,6 +166,9 @@
 				RelativePath="..\..\..\src\enumstxt.h">
 			</File>
 			<File
+				RelativePath="..\..\..\include\epanet2.h">
+			</File>
+			<File
 				RelativePath="..\..\..\src\funcs.h">
 			</File>
 			<File

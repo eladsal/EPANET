@@ -2048,6 +2048,41 @@ int  DLLEXPORT ENsetqualtype(int qualcode, char *chemname,
    return(0);
 }
 
+/*
+----------------------------------------------------------------
+   Functions for creating new network data
+----------------------------------------------------------------
+*/
+int  DLLEXPORT  ENcreatepattern(char *id)
+/*----------------------------------------------------------------
+**  Input:   id     = new time pattern ID
+**  Output:  none
+**  Returns: error code                              
+**  Purpose: Creates new time pattern with PatternID *id.
+**           New patterns are indexed sequentially with length
+**           1 and initial value 1.
+**----------------------------------------------------------------
+*/
+{
+   int i;
+   if (!Openflag) return(102);
+   for (i=1; i<=Npats; i++)  /* Check that PatternID is unused */
+   {
+      if (strcmp(id, Pattern[i].ID) == 0)
+      {
+         return(252);
+      }
+   }
+   Npats++;
+   Pattern = (Spattern *) realloc(Pattern, (Npats+1)*sizeof(Spattern));
+   if (Pattern == NULL) return(101);
+   Pattern[Npats].F = (float *) calloc(1, sizeof(float));
+   if (Pattern[Npats].F == NULL) return(101);
+   strcpy(Pattern[Npats].ID,id);
+   Pattern[Npats].Length = 1;
+   Pattern[Npats].F[0] = 1.0;
+   return(0);
+}
 
 /*
 ----------------------------------------------------------------
