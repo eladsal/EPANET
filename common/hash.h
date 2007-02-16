@@ -17,7 +17,8 @@ struct HTentry
 typedef struct HTentry *HTtable;
 
 HTtable *HTcreate(void);
-int	HTinsert(HTtable *, char *, int);
+int     HTinsert(HTtable *, char *, int);
 int 	HTfind(HTtable *, char *);
+char    *HTfindKey(HTtable *, char *);
 void	HTfree(HTtable *);
 	
