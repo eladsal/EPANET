@@ -2532,23 +2532,6 @@ void  freedata()
 */
 
 
-int  strcomp(char *s1, char *s2)
-/*---------------------------------------------------------------
-**  Input:   s1 = character string
-**           s2 = character string
-**  Output:  none
-**  Returns: 1 if s1 is same as s2, 0 otherwise
-**  Purpose: case insensitive comparison of strings s1 & s2
-**---------------------------------------------------------------
-*/
-{
-   int i;
-   for (i=0; UCHAR(s1[i]) == UCHAR(s2[i]); i++)
-     if (!s1[i+1] && !s2[i+1]) return(1);
-   return(0);
-}                                       /*  End of strcomp  */
-
-
 float  interp(int n, float x[], float y[], float xx)
 /*----------------------------------------------------------------
 **  Input:   n  = number of data pairs defining a curve
