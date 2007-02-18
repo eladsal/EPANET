@@ -115,11 +115,11 @@ INSTALL_DATA = $(INSTALL) -m 644
 # Files for the shared object library
 epanet_objs=toolkit.o hash.o hydraul.o inpfile.o input1.o input2.o \
 	    input3.o mempool.o output.o quality.o report.o \
-	    rules.o smatrix.o
+	    rules.o smatrix.o utils.o
 # Epanet main program
 epanet_main_obj=epanet.o
 # Epanet header files
-epanet_heads=enumstxt.h funcs.h hash.h mempool.h text.h toolkit.h types.h vars.h
+epanet_heads=enumstxt.h funcs.h hash.h mempool.h text.h toolkit.h types.h vars.h utils.h
 # Epanet main program header files
 epanet_main_heads = $(epanetincludedir)/epanet2.h
 
