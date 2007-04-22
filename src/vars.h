@@ -4,7 +4,9 @@
                                                                     
 VERSION:    2.00                                               
 DATE:       5/8/00
-            6/24/02                                           
+            6/24/02
+            12/13/06
+            1/24/07                                           
 AUTHOR:     L. Rossman                                         
             US EPA - NRMRL
                                                                      
@@ -29,16 +31,15 @@ EXTERN char     Msg[MAXMSG+1],         /* Text of output message       */
                 ChemName[MAXID+1],     /* Name of chemical             */
                 ChemUnits[MAXID+1],    /* Units of chemical            */
                 DefPatID[MAXID+1],     /* Default demand pattern ID    */
-
-/*** Updated 6/24/02 ***/
-                Atime[13],             /* Clock time (hrs:min:sec)     */
-
+                AdjustPatID[MAXID+1],  /* Demand adjustor pattern ID   */      /*** Added 12/13/06 ***/
+                Atime[13],             /* Clock time (hrs:min:sec)     */      /*** Updated 6/24/02 ***/
                 Hydflag,               /* Hydraulics flag              */
                 Qualflag,              /* Water quality flag           */
                 Unitsflag,             /* Unit system flag             */
                 Flowflag,              /* Flow units flag              */
                 Pressflag,             /* Pressure units flag          */
                 Formflag,              /* Hydraulic formula flag       */
+                Igrateflag,            /* Tank level integration flag  */      /*** Added 1/24/07 ***/
                 Rptflag,               /* Report flag                  */
                 Summaryflag,           /* Report summary flag          */
                 Messageflag,           /* Error/warning message flag   */
@@ -79,6 +80,7 @@ EXTERN int      MaxNodes,              /* Node count from input file   */
                 Nperiods,              /* Number of reporting periods  */
                 Ncoeffs,               /* Number of non-0 matrix coeffs*/
                 DefPat,                /* Default demand pattern       */
+                AdjustPat,             /* Demand adjustment pattern    */      /*** Added 12/13/06 ***/
                 Epat,                  /* Energy cost time pattern     */
                 MaxIter,               /* Max. hydraulic trials        */
                 ExtraIter,             /* Extra hydraulic trials       */

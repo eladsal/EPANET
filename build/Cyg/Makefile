@@ -2,8 +2,7 @@
 
 # This will build EPANET as a native windows DLL and import
 # library (epanet_gcc_<Rev>.dll/libepanet_gcc_<Rev>.dll.a) under Cygwin/MinGW,
-# and a standalone executable (epanet_gcc_<Rev>.exe) that is linked
-# to this import library.
+# and a standalone executable (epanet_gcc_<Rev>.exe).
 # <Rev> is the atomic revision number of the EPANET SVN repo,
 # so the results of each build can be unambiguously tracked to a repo Rev.
 # This makefile also creates a windows batch file
@@ -104,7 +103,7 @@ docdir = $(datarootdir)/doc/epanet
 CC = $(MinGWdir)/bin/gcc
 dlltool = $(MinGWdir)/bin/dlltool
 CFLAGS = -g -O
-CPPFLAGS = -I $(srcdir) -I $(epanetincludedir) -I $(epanetcommondir) -DENSILENT
+CPPFLAGS = -I $(srcdir) -I $(epanetincludedir) -I $(epanetcommondir)
 LDFLAGS = -L . -W1,-rpath,$(libdir)
 
 # Installer
@@ -112,16 +111,12 @@ INSTALL = install
 INSTALL_PROGRAM = $(INSTALL)
 INSTALL_DATA = $(INSTALL) -m 644
 
-# Files for the shared object library
-epanet_objs=toolkit.o hash.o hydraul.o inpfile.o input1.o input2.o \
+# EPANET object files
+epanet_objs=hash.o hydraul.o inpfile.o input1.o input2.o \
 	    input3.o mempool.o output.o quality.o report.o \
-	    rules.o smatrix.o utils.o
-# Epanet main program
-epanet_main_obj=epanet.o
+	    rules.o smatrix.o
 # Epanet header files
-epanet_heads=enumstxt.h funcs.h hash.h mempool.h text.h toolkit.h types.h vars.h utils.h
-# Epanet main program header files
-epanet_main_heads = $(epanetincludedir)/epanet2.h
+epanet_heads=enumstxt.h funcs.h hash.h mempool.h text.h toolkit.h types.h vars.h
 
 .PHONY: all
 all: $(dllname) $(exename)
@@ -129,12 +124,14 @@ all: $(dllname) $(exename)
 $(dllname): $(epanet_objs)
 #	$(dlltool) -z $(defname) --dllname $(dllname) --output-lib $(implibname) $^
 #	$(CC) $(CFLAGS) $(LDFLAGS) -shared -o $@ $(defname) $^
-	$(CC) $(CFLAGS) $(LDFLAGS) -shared -o $@ $^ -Wl,--output-def,$(defname)
-	$(CC) $(CFLAGS) $(LDFLAGS) -shared -o $@ $^ -Wl,--kill-at
+	$(CC) $(CFLAGS) $(CPPFLAGS) -DDLL -c $(epanetsrcdir)/epanet.c
+	$(CC) $(CFLAGS) $(LDFLAGS) -shared -o $@ epanet.o $^ -Wl,--output-def,$(defname)
+	$(CC) $(CFLAGS) $(LDFLAGS) -shared -o $@ epanet.o $^ -Wl,--kill-at
 	$(dlltool) -d $(defname) --dllname $@ --output-lib $(implibname) --kill-at
 
-$(exename): $(epanet_main_obj) $(dllname) $(epanet_main_heads)
-	$(CC) $(CFLAGS) $(LDFLAGS) $< -l$(dllname) -o $@
+$(exename): $(epanet_objs)
+	$(CC) $(CFLAGS) $(CPPFLAGS) -DCLE -c $(epanetsrcdir)/epanet.c
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ epanet.o $^
 
 $(epanet_objs): $(epanet_heads)
 

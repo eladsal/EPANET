@@ -9,6 +9,8 @@ DATE:       5/30/00
             10/25/00
             3/1/01
             6/24/02
+            12/13/06
+            1/24/07
 AUTHOR:     L. Rossman
             US EPA - NRMRL
 
@@ -1465,6 +1467,8 @@ int  optionchoice(int n)
 **    VERIFY              filename                               
 **    UNBALANCED          STOP/CONTINUE {Niter}
 **    PATTERN             id
+**    ADJUSTOR PATTERN    id                                                   Added 12/13/06
+**    INTEGRATION         STANDARD/MODIFIED                                    Added 1/24/07
 **--------------------------------------------------------------
 */
 {
@@ -1566,6 +1570,18 @@ int  optionchoice(int n)
       if (n < 1) return(0);
       strncpy(DefPatID,Tok[1],MAXID);
    }
+   else if (match(Tok[0],w_ADJUSTOR))           /* Adjustor option */          /*** Added 12/13/06 ***/
+   {                                                                           /*** Added 12/13/06 ***/
+      if (n < 2) return(0);                                                    /*** Added 12/13/06 ***/
+      strncpy(AdjustPatID,Tok[2],MAXID);                                       /*** Added 12/13/06 ***/
+   }                                                                           /*** Added 12/13/06 ***/
+   else if (match(Tok[0],w_INTEGRATION))        /* Integration option */       /*** Added 1/24/07 ***/
+   {                                                                           /*** Added 1/24/07 ***/
+      if (n < 1) return(0);                                                    /*** Added 1/24/07 ***/
+      else if (match(Tok[1],w_STANDARD)) Igrateflag = STANDARD;                /*** Added 1/24/07 ***/
+      else if (match(Tok[1],w_MODIFIED)) Igrateflag = MODIFIED;                /*** Added 1/24/07 ***/
+      else return(201);                                                        /*** Added 1/24/07 ***/
+   }                                                                           /*** Added 1/24/07 ***/
    else return(-1);
    return(0);
 }                        /* end of optionchoice */

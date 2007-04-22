@@ -5,7 +5,8 @@ REPORT.C -- Reporting Routines for EPANET Program
                                                                     
 VERSION:    2.00                                               
 DATE:       5/30/00
-            6/24/02                                          
+            6/24/02
+            1/24/07                                          
 AUTHOR:     L. Rossman
             US EPA - NRMRL
                                                                     
@@ -48,6 +49,7 @@ extern char *StatTxt[];
 extern char *TstatTxt[];
 extern char *LogoTxt[];
 extern char *RptFormTxt[];
+extern char *RptIgrateTxt[];                                                   /*** Added 1/24/07 ***/
 
 typedef   float *Pfloat;
 void      writenodetable(Pfloat *);
@@ -195,6 +197,8 @@ void  writesummary()
    writeline(s);
    sprintf(s,FMT25,RptFormTxt[Formflag]);
    writeline(s);
+   sprintf(s, FMT25a,RptIgrateTxt[Igrateflag]);                                /*** Added 1/24/07 ***/
+   writeline(s);                                                               /*** Added 1/24/07 ***/
    sprintf(s,FMT26,Hstep*Ucf[TIME],Field[TIME].Units);
    writeline(s);
    sprintf(s,FMT27,Hacc);

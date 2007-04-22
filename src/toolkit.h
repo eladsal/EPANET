@@ -7,24 +7,31 @@ VERSION:    2.00
 DATE:       5/8/00
             10/25/00
             3/1/01
-            3/29/06
+            3/13/07
 AUTHOR:     L. Rossman
             US EPA - NRMRL
 
 *******************************************************************
 */
 
-#ifdef WIN32
+// --- Define DLLEXPORT
+
+#ifdef DLL
   #ifdef __cplusplus
   #define DLLEXPORT extern "C" __declspec(dllexport) __stdcall
   #else
   #define DLLEXPORT __declspec(dllexport) __stdcall
   #endif
 #else
-#define DLLEXPORT
+  #ifdef __cplusplus
+  #define DLLEXPORT extern "C"
+  #else
+  #define DLLEXPORT
+  #endif
 #endif
 
-/* These are codes used by the DLL functions */
+// --- Define the EPANET toolkit constants
+
 #define EN_ELEVATION    0    /* Node parameters */
 #define EN_BASEDEMAND   1
 #define EN_PATTERN      2
@@ -39,8 +46,9 @@ AUTHOR:     L. Rossman
 #define EN_PRESSURE     11
 #define EN_QUALITY      12
 #define EN_SOURCEMASS   13
-
 #define EN_INITVOLUME   14
+#define EN_MIXMODEL     15
+#define EN_MIXZONEVOL   16
 
 #define EN_DIAMETER     0    /* Link parameters */
 #define EN_LENGTH       1
@@ -129,13 +137,11 @@ AUTHOR:     L. Rossman
 #define EN_NOSAVE       0   /* Save-results-to-file flag */
 #define EN_SAVE         1
 
-/*** Updated 3/1/01 ***/
 #define EN_INITFLOW    10   /* Re-initialize flows flag  */
 
 
-/* These are the external functions that comprise the DLL */
+// --- Declare the EPANET toolkit functions
 
-/*** Updated 3/1/01 ***/
  int  DLLEXPORT ENepanet(char *, char *, char *, void (*) (char *));
 
  int  DLLEXPORT ENopen(char *, char *, char *);
@@ -189,7 +195,6 @@ AUTHOR:     L. Rossman
  int  DLLEXPORT ENgetlinknodes(int, int *, int *);
  int  DLLEXPORT ENgetlinkvalue(int, int, float *);
 
-/*** Updated 10/25/00 ***/
  int  DLLEXPORT ENgetversion(int *);
 
  int  DLLEXPORT ENsetcontrol(int, int, int, float, int, float);
@@ -201,3 +206,6 @@ AUTHOR:     L. Rossman
  int  DLLEXPORT ENsetoption(int, float);
  int  DLLEXPORT ENsetstatusreport(int);
  int  DLLEXPORT ENsetqualtype(int, char *, char *, char *);
+
+ int  DLLEXPORT ENaddpattern(char *);
+ 

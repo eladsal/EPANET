@@ -11,6 +11,8 @@ DATE:       5/8/00
             12/6/01
             6/24/02
             3/29/06
+            12/13/06
+            1/24/07
 AUTHOR:     L. Rossman                                         
             US EPA - NRMRL
                                                                      
@@ -28,7 +30,7 @@ AUTHOR:     L. Rossman
 #define   VERSION            200
 #define   EOFMARK            0x1A  /* Use 0x04 for UNIX systems */
 #define   MAXTITLE  3        /* Max. # title lines                     */
-#define   MAXID     15       /* Max. # characters in ID name           */
+#define   MAXID     31       /* Max. # characters in ID name           */      //12/13/06
 #define   MAXMSG    79       /* Max. # characters in message text      */
 #define   MAXLINE   255      /* Max. # characters read from input line */
 #define   MAXFNAME  259      /* Max. # characters in file name         */
@@ -401,6 +403,10 @@ typedef struct            /* FIELD OBJECT of report table */
                   MIN,          /*   minimum values                    */
                   MAX,          /*   maximum values                    */
                   RANGE};       /*   max - min values                  */
+
+ enum IgrateType                /* Type of integration method          */      /*** Added 1/24/07 ***/
+                 {STANDARD,     /*   standard Euler                    */      /*** Added 1/24/07 ***/
+                  MODIFIED};    /*   modified Euler                    */      /*** Added 1/24/07 ***/
 
 #define MAXVAR   21             /* Max. # types of network variables   */
                                 /* (equals # items enumed below)       */

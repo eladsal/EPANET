@@ -2,7 +2,7 @@
 
 # This will build EPANET as a shared object library
 # (libepanet_gcc_<Rev>.so) under Linux/Unix, and a standalone
-# executable (epanet_gcc_<Rev>) that is linked to this library.
+# executable (epanet_gcc_<Rev>).
 
 # The following targets are defined:
 # make
@@ -68,7 +68,7 @@ docdir = $(datarootdir)/doc/epanet
 # Compiler and flags
 CC = gcc
 CFLAGS = -g -O -fPIC
-CPPFLAGS = -I $(srcdir) -I $(epanetincludedir) -I $(epanetcommondir) -DENSILENT
+CPPFLAGS = -I $(srcdir) -I $(epanetincludedir) -I $(epanetcommondir)
 LDFLAGS = -L . -W1,-rpath,$(libdir) -lm
 
 # Installer
@@ -77,24 +77,22 @@ INSTALL_PROGRAM = $(INSTALL)
 INSTALL_DATA = $(INSTALL) -m 644
 
 # Files for the shared object library
-epanet_objs=toolkit.o hash.o hydraul.o inpfile.o input1.o input2.o \
+epanet_objs=hash.o hydraul.o inpfile.o input1.o input2.o \
 	    input3.o mempool.o output.o quality.o report.o \
-	    rules.o smatrix.o utils.o
-# Epanet main program
-epanet_main_obj=epanet.o
+	    rules.o smatrix.o
 # Epanet header files
-epanet_heads=enumstxt.h funcs.h hash.h mempool.h text.h toolkit.h types.h vars.h utils.h
-# Epanet main program header files
-epanet_main_heads = $(epanetincludedir)/epanet2.h
+epanet_heads=enumstxt.h funcs.h hash.h mempool.h text.h toolkit.h types.h vars.h
 
 .PHONY: all
 all: $(libname) $(exename)
 
 $(libname): $(epanet_objs)
-	$(CC) $(CFLAGS) $(LDFLAGS) -shared -o $@ $^
+	$(CC) $(CFLAGS) $(CPPFLAGS) -DSOL -c $(epanetsrcdir)/epanet.c
+	$(CC) $(CFLAGS) $(LDFLAGS) -shared -o $@ epanet.o $^
 
-$(exename): $(epanet_main_obj) $(libname) $(epanet_main_heads)
-	$(CC) $(CFLAGS) $(LDFLAGS) $< -l$(epanetrootname) -o $@
+$(exename): $(epanet_objs)
+	$(CC) $(CFLAGS) $(CPPFLAGS) -DCLE -c $(epanetsrcdir)/epanet.c
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ epanet.o $^
 
 $(epanet_objs): $(epanet_heads)
 

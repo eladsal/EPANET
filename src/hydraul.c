@@ -13,6 +13,8 @@ DATE:       6/5/00
             6/24/02
             2/10/05
             5/10/06
+            12/13/06
+            1/24/07
 AUTHOR:     L. Rossman
             US EPA - NRMRL
                                                                    
@@ -75,6 +77,12 @@ AUTHOR:     L. Rossman
 /*** Updated 3/1/01 ***/
 /* Flag used to halt taking further time steps */
 int Haltflag;
+
+/* Declarations for modified Euler integration */                              /*** Added 1/24/07 ***/ 
+float *tankV;                                                                  /*** Added 1/24/07 ***/
+float *tankQ;                                                                  /*** Added 1/24/07 ***/
+REAL  *tankH;                                                                  /*** Added 1/24/07 ***/
+int   modEuler(long tstep);                                                    /*** Added 1/24/07 ***/
 
 
 int  openhyd()
@@ -229,7 +237,15 @@ int  nexthyd(long *tstep)
    /* Compute next time step & update tank levels */
    *tstep = 0;
    hydstep = 0;
-   if (Htime < Dur) hydstep = timestep();
+   if (Htime < Dur)
+   {                                                                           /*** Changed 1/24/07 ***/
+      if (Igrateflag == MODIFIED)                                              /*** Changed 1/24/07 ***/
+      {                                                                        /*** Changed 1/24/07 ***/
+         errcode = modEuler(Hstep);                                            /*** Changed 1/24/07 ***/
+         if ( errcode ) return errcode;                                        /*** Changed 1/24/07 ***/
+      }                                                                        /*** Changed 1/24/07 ***/  
+      hydstep = timestep();                                                    /*** Changed 1/24/07 ***/
+   }                                                                           /*** Changed 1/24/07 ***/
    if (Saveflag) errcode = savehydstep(&hydstep);
 
    /* Compute pumping energy */
@@ -249,7 +265,53 @@ int  nexthyd(long *tstep)
    *tstep = hydstep;
    return(errcode);
 }
-  
+
+/*********************************** Added 1/24/07 ************************** */
+int  modEuler(long tstep)
+/*
+**--------------------------------------------------------------
+**  Input:   tstep = time step (in seconds)     
+**  Output:  none
+**  Purpose: applies modified Euler integration over a time step
+**           to update tank levels 
+**--------------------------------------------------------------
+*/
+{
+   int   i, iter, n, errcode = 0;
+   float relerr;
+   char  tmpflag;
+
+   /* === Save current tank data ==========================================*/
+   for (i=1; i<=Ntanks; i++)
+   {
+      tankV[i] = Tank[i].V;
+      n = Tank[i].Node;
+      tankQ[i] = D[n];
+      tankH[i] = H[n];
+   }
+
+   /* === Project tank levels over 1/2 a normal time step =================*/
+   tanklevels(tstep/2);
+
+   /* === Re-solve network with updated tank levels but current demands ===*/
+   tmpflag = Statflag;
+   Statflag = FALSE;
+   errcode = netsolve(&iter,&relerr);
+   Statflag = tmpflag;
+   if (errcode == 0)
+   {
+   
+      /* === New tank inflow is average of old and new values =============*/
+      for (i=1; i<=Ntanks; i++)
+      {
+         Tank[i].V = tankV[i];
+         n = Tank[i].Node;
+         H[n] = tankH[i];
+         if (Tank[i].A > 0.0) D[n] = (tankQ[i] + D[n])/2.;
+      }
+   }
+   return errcode;
+}                               /* End of modEuler */
 
 void  closehyd()
 /*
@@ -291,6 +353,17 @@ int  allocmatrix()
    ERRCODE(MEMCHECK(Y));
    ERRCODE(MEMCHECK(X));
    ERRCODE(MEMCHECK(OldStat));
+
+   if ( Igrateflag == MODIFIED )                                               /*** Added 1/24/07 ***/
+   {                                                                           /*** Added 1/24/07 ***/
+       tankV = (float *) calloc(Ntanks+1, sizeof(float));                      /*** Added 1/24/07 ***/
+       tankQ = (float *) calloc(Ntanks+1, sizeof(float));                      /*** Added 1/24/07 ***/
+       tankH = (REAL *)  calloc(Ntanks+1, sizeof(REAL));                       /*** Added 1/24/07 ***/
+       ERRCODE(MEMCHECK(tankV));                                               /*** Added 1/24/07 ***/
+       ERRCODE(MEMCHECK(tankQ));                                               /*** Added 1/24/07 ***/
+       ERRCODE(MEMCHECK(tankH));                                               /*** Added 1/24/07 ***/
+   }                                                                           /*** Added 1/24/07 ***/
+
    return(errcode);
 }                               /* end of allocmatrix */
 
@@ -312,6 +385,13 @@ void  freematrix()
    free(Y);
    free(X);
    free(OldStat);
+
+   if ( Igrateflag == MODIFIED )                                               /*** Added 1/24/07 ***/
+   {                                                                           /*** Added 1/24/07 ***/
+       free(tankV);                                                            /*** Added 1/24/07 ***/
+       free(tankQ);                                                            /*** Added 1/24/07 ***/
+       free(tankH);                                                            /*** Added 1/24/07 ***/ 
+   }                                                                           /*** Added 1/24/07 ***/
 }                               /* end of freematrix */
 
 
@@ -564,10 +644,18 @@ void  demands()
    int i,j,n;
    long k,p;
    float djunc, sum;
+   float adjustor = 1.0f;                                                      /*** Added 12/13/06 ***/
    Pdemand demand;
 
    /* Determine total elapsed number of pattern periods */
    p = (Htime+Pstart)/Pstep;
+
+   /* Determine demand adjustor */                                             /*** Added 12/13/06 ***/
+   if (AdjustPat > 0)                                                          /*** Added 12/13/06 ***/
+   {                                                                           /*** Added 12/13/06 ***/
+      k = p % (long) Pattern[AdjustPat].Length;                                /*** Added 12/13/06 ***/
+      adjustor = Pattern[AdjustPat].F[k];                                      /*** Added 12/13/06 ***/
+   }                                                                           /*** Added 12/13/06 ***/
 
    /* Update demand at each node according to its assigned pattern */
    Dsystem = 0.0;          /* System-wide demand */
@@ -586,7 +674,7 @@ void  demands()
          if (djunc > 0.0) Dsystem += djunc;
          sum += djunc;
       }
-      D[i] = sum;
+      D[i] = sum * adjustor;                                                   /*** Modified 12/13/06 ***/
    }
 
    /* Update head at fixed grade nodes with time patterns. */

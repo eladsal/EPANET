@@ -3,13 +3,14 @@
 **
 ** C/C++ header file for EPANET Programmers Toolkit
 **
-** Last updated on 3/29/06
+** Last updated on 3/13/07
 */
 
 #ifndef EPANET2_H
 #define EPANET2_H
 
-/* These are codes used by the DLL functions */
+// --- Define the EPANET toolkit constants
+
 #define EN_ELEVATION    0    /* Node parameters */
 #define EN_BASEDEMAND   1
 #define EN_PATTERN      2
@@ -24,8 +25,9 @@
 #define EN_PRESSURE     11
 #define EN_QUALITY      12
 #define EN_SOURCEMASS   13
-
 #define EN_INITVOLUME   14
+#define EN_MIXMODEL     15
+#define EN_MIXZONEVOL   16
 
 #define EN_DIAMETER     0    /* Link parameters */
 #define EN_LENGTH       1
@@ -116,86 +118,100 @@
 #define EN_INITFLOW     10  /* Re-initialize flow flag   */
 
 
-/* These are the external functions that comprise the DLL */
 
-#ifdef __cplusplus
-#define EXTERN extern "C"
-#else
-#define EXTERN extern
+// --- define WINDOWS
+
+#undef WINDOWS
+#ifdef _WIN32
+  #define WINDOWS
 #endif
-#ifdef WIN32
-#define CALLTYPE __stdcall
-#else
-#define CALLTYPE
+#ifdef __WIN32__
+  #define WINDOWS
 #endif
 
-EXTERN int   CALLTYPE ENepanet(char *, char *, char *, void (*) (char *));
-EXTERN int   CALLTYPE ENopen(char *, char *, char *);
-EXTERN int   CALLTYPE ENsaveinpfile(char *);
-EXTERN int   CALLTYPE ENclose(void);
+// --- define DLLEXPORT
 
-EXTERN int   CALLTYPE ENsolveH(void);
-EXTERN int   CALLTYPE ENsaveH(void);
-EXTERN int   CALLTYPE ENopenH(void);
-EXTERN int   CALLTYPE ENinitH(int);
-EXTERN int   CALLTYPE ENrunH(long *);
-EXTERN int   CALLTYPE ENnextH(long *);
-EXTERN int   CALLTYPE ENcloseH(void);
-EXTERN int   CALLTYPE ENsavehydfile(char *);
-EXTERN int   CALLTYPE ENusehydfile(char *);
+#ifdef WINDOWS
+  #ifdef __cplusplus
+  #define DLLEXPORT extern "C" __declspec(dllexport) __stdcall
+  #else
+  #define DLLEXPORT __declspec(dllexport) __stdcall
+  #endif
+#else
+  #ifdef __cplusplus
+  #define DLLEXPORT extern "C"
+  #else
+  #define DLLEXPORT
+  #endif
+#endif
 
-EXTERN int   CALLTYPE ENsolveQ(void);
-EXTERN int   CALLTYPE ENopenQ(void);
-EXTERN int   CALLTYPE ENinitQ(int);
-EXTERN int   CALLTYPE ENrunQ(long *);
-EXTERN int   CALLTYPE ENnextQ(long *);
-EXTERN int   CALLTYPE ENstepQ(long *);
-EXTERN int   CALLTYPE ENcloseQ(void);
 
-EXTERN int   CALLTYPE ENwriteline(char *);
-EXTERN int   CALLTYPE ENreport(void);
-EXTERN int   CALLTYPE ENresetreport(void);
-EXTERN int   CALLTYPE ENsetreport(char *);
+// --- declare the EPANET toolkit functions
 
-EXTERN int   CALLTYPE ENgetcontrol(int, int *, int *, float *,
+ int   DLLEXPORT ENepanet(char *, char *, char *, void (*) (char *));
+ int   DLLEXPORT ENopen(char *, char *, char *);
+ int   DLLEXPORT ENsaveinpfile(char *);
+ int   DLLEXPORT ENclose(void);
+
+ int   DLLEXPORT ENsolveH(void);
+ int   DLLEXPORT ENsaveH(void);
+ int   DLLEXPORT ENopenH(void);
+ int   DLLEXPORT ENinitH(int);
+ int   DLLEXPORT ENrunH(long *);
+ int   DLLEXPORT ENnextH(long *);
+ int   DLLEXPORT ENcloseH(void);
+ int   DLLEXPORT ENsavehydfile(char *);
+ int   DLLEXPORT ENusehydfile(char *);
+
+ int   DLLEXPORT ENsolveQ(void);
+ int   DLLEXPORT ENopenQ(void);
+ int   DLLEXPORT ENinitQ(int);
+ int   DLLEXPORT ENrunQ(long *);
+ int   DLLEXPORT ENnextQ(long *);
+ int   DLLEXPORT ENstepQ(long *);
+ int   DLLEXPORT ENcloseQ(void);
+
+ int   DLLEXPORT ENwriteline(char *);
+ int   DLLEXPORT ENreport(void);
+ int   DLLEXPORT ENresetreport(void);
+ int   DLLEXPORT ENsetreport(char *);
+
+ int   DLLEXPORT ENgetcontrol(int, int *, int *, float *,
                       int *, float *);
-EXTERN int   CALLTYPE ENgetcount(int, int *);
-EXTERN int   CALLTYPE ENgetoption(int, float *);
-EXTERN int   CALLTYPE ENgettimeparam(int, long *);
-EXTERN int   CALLTYPE ENgetflowunits(int *);
-EXTERN int   CALLTYPE ENgetpatternindex(char *, int *);
-EXTERN int   CALLTYPE ENgetpatternid(int, char *);
-EXTERN int   CALLTYPE ENgetpatternlen(int, int *);
-EXTERN int   CALLTYPE ENgetpatternvalue(int, int, float *);
-EXTERN int   CALLTYPE ENgetqualtype(int *, int *);
-EXTERN int   CALLTYPE ENgeterror(int, char *, int);
+ int   DLLEXPORT ENgetcount(int, int *);
+ int   DLLEXPORT ENgetoption(int, float *);
+ int   DLLEXPORT ENgettimeparam(int, long *);
+ int   DLLEXPORT ENgetflowunits(int *);
+ int   DLLEXPORT ENgetpatternindex(char *, int *);
+ int   DLLEXPORT ENgetpatternid(int, char *);
+ int   DLLEXPORT ENgetpatternlen(int, int *);
+ int   DLLEXPORT ENgetpatternvalue(int, int, float *);
+ int   DLLEXPORT ENgetqualtype(int *, int *);
+ int   DLLEXPORT ENgeterror(int, char *, int);
 
-EXTERN int   CALLTYPE ENgetnodeindex(char *, int *);
-EXTERN int   CALLTYPE ENgetnodeid(int, char *);
-EXTERN int   CALLTYPE ENgetnodetype(int, int *);
-EXTERN int   CALLTYPE ENgetnodevalue(int, int, float *);
+ int   DLLEXPORT ENgetnodeindex(char *, int *);
+ int   DLLEXPORT ENgetnodeid(int, char *);
+ int   DLLEXPORT ENgetnodetype(int, int *);
+ int   DLLEXPORT ENgetnodevalue(int, int, float *);
 
-EXTERN int   CALLTYPE ENgetlinkindex(char *, int *);
-EXTERN int   CALLTYPE ENgetlinkid(int, char *);
-EXTERN int   CALLTYPE ENgetlinktype(int, int *);
-EXTERN int   CALLTYPE ENgetlinknodes(int, int *, int *);
-EXTERN int   CALLTYPE ENgetlinkvalue(int, int, float *);
+ int   DLLEXPORT ENgetlinkindex(char *, int *);
+ int   DLLEXPORT ENgetlinkid(int, char *);
+ int   DLLEXPORT ENgetlinktype(int, int *);
+ int   DLLEXPORT ENgetlinknodes(int, int *, int *);
+ int   DLLEXPORT ENgetlinkvalue(int, int, float *);
 
-EXTERN int   CALLTYPE ENgetversion(int *);
+ int   DLLEXPORT ENgetversion(int *);
 
-EXTERN int   CALLTYPE ENsetcontrol(int, int, int, float, int, float);
-EXTERN int   CALLTYPE ENsetnodevalue(int, int, float);
-EXTERN int   CALLTYPE ENsetlinkvalue(int, int, float);
-EXTERN int   CALLTYPE ENsetpattern(int, float *, int);
-EXTERN int   CALLTYPE ENsetpatternvalue(int, int, float);
-EXTERN int   CALLTYPE ENsettimeparam(int, long);
-EXTERN int   CALLTYPE ENsetoption(int, float);
-EXTERN int   CALLTYPE ENsetstatusreport(int);
-EXTERN int   CALLTYPE ENsetqualtype(int, char *, char *, char *);
+ int   DLLEXPORT ENsetcontrol(int, int, int, float, int, float);
+ int   DLLEXPORT ENsetnodevalue(int, int, float);
+ int   DLLEXPORT ENsetlinkvalue(int, int, float);
+ int   DLLEXPORT ENsetpattern(int, float *, int);
+ int   DLLEXPORT ENsetpatternvalue(int, int, float);
+ int   DLLEXPORT ENsettimeparam(int, long);
+ int   DLLEXPORT ENsetoption(int, float);
+ int   DLLEXPORT ENsetstatusreport(int);
+ int   DLLEXPORT ENsetqualtype(int, char *, char *, char *);
 
-EXTERN int   CALLTYPE ENcreatepattern(char *);
-
-#undef EXTERN
-#undef CALLTYPE
+ int   DLLEXPORT ENaddpattern(char *);
 
 #endif

@@ -631,16 +631,12 @@ int  saveinpfile(char *fname)
    }
    fprintf(f, "\n");
 
-/*** Updated 3/12/07 ***/
+/*** Updated 3/10/07  ***/
 /* Copy data from scratch file to new input file */
    if (ftmp != NULL)
    {
       fseek(ftmp, 0, SEEK_SET);
-      
-	  while ((j = fgetc(ftmp)) != EOF)
-	  {
-         fputc(j, f);
-	  }
+      while ( (j = fgetc(ftmp)) != EOF ) fputc(j, f);
       fclose(ftmp);
    } 
 /*** End of update ***/   

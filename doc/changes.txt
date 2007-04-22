@@ -5,24 +5,70 @@ Release 2.00.11
 ---------------
 DATE      CODE MODULES  CHANGES
 ===============================================================================
-3/29/06   EPANET2.H,    EN_INITVOLUME added to list of node parameters.
-          TOOLKIT.H
+3/10/07   EPANET.C      The symbols CLE (for command line executable) and
+                        SOL (for shared object library) were introduced in
+                        addition to the existing symbol DLL (for dynamic linked
+                        library) to support conditional compliation for shared
+                        object libraries on Unix/Linux.
+------------------------------------------------------------------------------
+3/10/07   EPANET2.H     The symbol CALLTYPE was left undefined for non-Windows
+                        compilation.
 -------------------------------------------------------------------------------
-3/29/06	  EPANET.C      code added to return a value for EN_INITVOLUME in
+3/10/07   TOOLKIT.H     The symbol DLLEXPORT was left undefined for non-
+                        Windows DLL compilation
+-------------------------------------------------------------------------------
+3/10/07   QUALITY.C     The memory pool used for water quality routing segments
+                        was given the name SegPool and declared as a static
+                        global variable.
+-------------------------------------------------------------------------------
+3/10/07   INPFILE.C     The addition of an extraneous character at the end
+                        of the .INP file produced by the toolkit function
+                        ENsaveinpfile was removed.
+-------------------------------------------------------------------------------
+3/10/07   EPANET.C      EN_MIXMODEL and EN_MIXZONEVOL were added to the list of
+          EPANET2.H     node parameters that can be returned with the function
+          TOOLKIT.H     ENgetnodevalue.
+-------------------------------------------------------------------------------
+2/23/07   EPANET.C      Code was added to return a value for EN_SOURCEPAT in
                         function ENgetnodevalue.
---------------------------------------------------------------------------------
-3/29/06   RULES.C       the input values for a tank's FILLTIME or DRAINTIME 
+-------------------------------------------------------------------------------
+1/24/07   TYPES.H       A modified Euler method was added as an option to
+          VARS.H        use in integrating storage tank levels in extended
+	  TEXT.H        period hydraulic simulations.
+	  ENUMSTXT.H
+	  INPUT1.C
+	  INPUT2.C
+	  HYDRAUL.C
+	  REPORT.C
+-------------------------------------------------------------------------------
+12/13/06  TYPES.H       MAXID was increased to allow ID names to contain up
+          HASH.C        to 31 characters.
+-------------------------------------------------------------------------------
+12/13/06  VARS.H        A new option named ADJUSTOR PATTERN was added to
+          TEXT.H        allow the use of a global demand multiplier that
+	  INPUT1.C      varies according to a user-defined time pattern.
+	  INPUT2.C
+	  INPUT3.C
+          HYDRAUL.C
+-------------------------------------------------------------------------------
+3/29/06   EPANET2.H,    EN_INITVOLUME was added to the list of node parameters.
+          TOOLKIT.H     
+-------------------------------------------------------------------------------
+3/29/06	  EPANET.C      Code was added to return a value for EN_INITVOLUME in
+                        function ENgetnodevalue.
+-------------------------------------------------------------------------------
+3/29/06   RULES.C       The input values for a tank's FILLTIME or DRAINTIME 
                         in a rule premise are now converted to seconds in the
 			newpremise() function.
---------------------------------------------------------------------------------
-3/29/06   TYPES.H       changed code version to 20011.
 -------------------------------------------------------------------------------
-5/10/06   HYDRAUL.C     removed extraneous "if" statement from resistance();
+3/29/06   TYPES.H       Changed code version to 20011.
+-------------------------------------------------------------------------------
+5/10/06   HYDRAUL.C     Removed extraneous "if" statement from resistance();
                         corrected value of Y-coefficient set in gpvcoeff().
 -------------------------------------------------------------------------------
-2/10/05   HYDRAUL.C     corrected value for P-coefficient set in fcvcoeff().
+2/10/05   HYDRAUL.C     Corrected value for P-coefficient set in fcvcoeff().
 -------------------------------------------------------------------------------
-12/8/04   QUALITY.C     in release() function, the upstream node quality is now
+12/8/04   QUALITY.C     In release() function, the upstream node quality is now
                         mixed together with that of the upstream pipe segment
 			when the quality difference between the two is less
 			than the CTOL tolerance.

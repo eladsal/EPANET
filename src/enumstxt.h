@@ -44,6 +44,9 @@ char *RptFormTxt[]      = {t_HW,
                            t_DW,
                            t_CM};
 
+char *RptIgrateTxt[]    = {w_STANDARD,                                         /*** Added 1/24/07 ***/
+                           w_MODIFIED};                                        /*** Added 1/24/07 ***/
+
 char *RptFlowUnitsTxt[] = {u_CFS,
                            u_GPM,
                            u_MGD,

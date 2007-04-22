@@ -8,6 +8,7 @@ DATE:       5/29/00
             9/7/00
             10/25/00
             12/8/04
+            3/10/07
 AUTHOR:     L. Rossman
             US EPA - NRMRL
                                                                       
@@ -77,6 +78,7 @@ float     Bucf;                 /* Bulk reaction units conversion factor   */
 float     Tucf;                 /* Tank reaction units conversion factor   */
 char      Reactflag;            /* Reaction indicator                      */
 char      OutOfMemory;          /* Out of memory indicator                 */
+static    alloc_handle_t *SegPool; // Memory pool for water quality segments
 
 
 int  openqual()
@@ -92,8 +94,10 @@ int  openqual()
    int n;
 
    /* Allocate memory pool for WQ segments */
+   /***  modified on 3/10/07  ***/
    OutOfMemory = FALSE;
-   if (AllocInit() == NULL) errcode = 101;
+   SegPool = AllocInit();
+   if (SegPool == NULL) errcode = 101;
 
    /* Allocate scratch array & reaction rate array*/
    X  = (float *) calloc(MAX((Nnodes+1),(Nlinks+1)),sizeof(float));
@@ -168,7 +172,9 @@ void  initqual()
       Reactflag = setReactflag();
 
       /* Reset memory pool */
+      /***  modified 3/10/07  ***/
       FreeSeg = NULL;
+      AllocSetPool(SegPool);
       AllocReset(); 
    }
 
@@ -297,7 +303,15 @@ int closequal()
 */
 {
    int errcode = 0;
-   AllocFreePool();   /* Free memory pool */
+
+   /* Free memory pool */
+   /***  modified 3/10/07  ***/
+   if ( SegPool )             
+   {
+        AllocSetPool(SegPool);
+        AllocFreePool();
+   }
+
    free(FirstSeg);
    free(LastSeg);
    free(FlowDir);
@@ -400,6 +414,7 @@ void  transport(long tstep)
    long   qtime, dt;
 
    /* Repeat until elapsed time equals hydraulic time step */
+   AllocSetPool(SegPool);                                                      // added 3/10/07
    qtime = 0;
    while (!OutOfMemory && qtime < tstep)
    {                                  /* Qstep is quality time step */

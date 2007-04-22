@@ -7,6 +7,7 @@ VERSION:    2.00
 DATE:       5/30/00
             9/7/00
             10/25/00
+            12/13/06
 AUTHOR:     L. Rossman
             US EPA - NRMRL
 
@@ -599,6 +600,7 @@ int     getpatterns(void)
       i = pat->i;
 
    /* Check if this is the default pattern */
+      if (strcmp(pat->ID, AdjustPatID) == 0) AdjustPat = i;                    /*** Added 12/13/06 ***/
       if (strcmp(pat->ID, DefPatID) == 0) DefPat = i;
       if (i >= 0 && i <= MaxPats)
       {
@@ -701,6 +703,59 @@ int     getcurves(void)
    }
    return(0);
 }
+
+
+int  findmatch(char *line, char *keyword[])
+/*
+**--------------------------------------------------------------
+**  Input:   *line      = line from input file
+**           *keyword[] = list of NULL terminated keywords
+**  Output:  returns index of matching keyword or
+**           -1 if no match found
+**  Purpose: determines which keyword appears on input line
+**--------------------------------------------------------------
+*/
+{
+   int i = 0;
+   while (keyword[i] != NULL)
+   {
+      if (match(line,keyword[i])) return(i);
+      i++;
+   }
+   return(-1);
+}                        /* end of findmatch */
+
+
+
+int  match(char *str, char *substr)
+/*
+**--------------------------------------------------------------
+**  Input:   *str    = string being searched
+**           *substr = substring being searched for
+**  Output:  returns 1 if substr found in str, 0 if not
+**  Purpose: sees if substr matches any part of str
+**
+**      (Not case sensitive)
+**--------------------------------------------------------------
+*/
+{
+   int i,j;
+
+/*** Updated 9/7/00 ***/
+/* Fail if substring is empty */
+   if (!substr[0]) return(0);
+
+/* Skip leading blanks of str. */
+   for (i=0; str[i]; i++)
+     if (str[i] != ' ') break;
+
+/* Check if substr matches remainder of str. */
+   for (i=i,j=0; substr[j]; i++,j++)
+      if (!str[i] || UCHAR(str[i]) != UCHAR(substr[j]))
+         return(0);
+   return(1);
+}                        /* end of match */
+
 
 /*** Updated 10/25/00 ***/
 /* The gettokens function has been totally re-written. */
