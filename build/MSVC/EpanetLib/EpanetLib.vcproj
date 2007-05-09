@@ -20,7 +20,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="&quot;C:\Documents and Settings\james\My Documents\ENGCVS\EPANET\BASE\trunk\common&quot;"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;EPANETLIB_EXPORTS;ENSILENT"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;EPANETLIB_EXPORTS;DLL"
 				MinimalRebuild="TRUE"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
@@ -70,7 +70,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				AdditionalIncludeDirectories="&quot;C:\Documents and Settings\james\My Documents\ENGCVS\EPANET\BASE\trunk\common&quot;"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;EPANETLIB_EXPORTS;ENSILENT"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;EPANETLIB_EXPORTS;DLL"
 				RuntimeLibrary="0"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
@@ -119,6 +119,9 @@
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}">
 			<File
+				RelativePath="..\..\..\src\epanet.c">
+			</File>
+			<File
 				RelativePath="..\..\..\common\hash.c">
 			</File>
 			<File
@@ -154,12 +157,6 @@
 			<File
 				RelativePath="..\..\..\src\smatrix.c">
 			</File>
-			<File
-				RelativePath="..\..\..\src\toolkit.c">
-			</File>
-			<File
-				RelativePath="..\..\..\common\utils.c">
-			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -181,9 +178,6 @@
 				RelativePath="..\..\..\common\mempool.h">
 			</File>
 			<File
-				RelativePath=".\stdafx.h">
-			</File>
-			<File
 				RelativePath="..\..\..\src\text.h">
 			</File>
 			<File
@@ -191,9 +185,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\types.h">
-			</File>
-			<File
-				RelativePath="..\..\..\common\utils.h">
 			</File>
 			<File
 				RelativePath="..\..\..\src\vars.h">
