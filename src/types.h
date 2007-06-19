@@ -1,9 +1,9 @@
 /*
 ***********************************************************************
-                                                                     
-TYPES.H -- Global constants and data types for EPANET program  
-                                                                     
-VERSION:    2.00                                               
+
+TYPES.H -- Global constants and data types for EPANET program
+
+VERSION:    2.00
 DATE:       5/8/00
             9/7/00
             10/25/00
@@ -13,9 +13,9 @@ DATE:       5/8/00
             3/29/06
             12/13/06
             1/24/07
-AUTHOR:     L. Rossman                                         
+AUTHOR:     L. Rossman
             US EPA - NRMRL
-                                                                     
+
 **********************************************************************
 */
 /*
@@ -46,7 +46,7 @@ AUTHOR:     L. Rossman
 
 /*** Updated 9/7/00 ***/
 /* Various conversion factors */
-#define   GPMperCFS   448.831 
+#define   GPMperCFS   448.831
 #define   AFDperCFS   1.9837
 #define   MGDperCFS   0.64632
 #define   IMGDperCFS  0.5382
@@ -72,7 +72,7 @@ AUTHOR:     L. Rossman
 
 /*
 ---------------------------------------------------------------------
-   Macro to test for successful allocation of memory            
+   Macro to test for successful allocation of memory
 ---------------------------------------------------------------------
 */
 #define  MEMCHECK(x)  (((x) == NULL) ? 101 : 0 )
@@ -80,9 +80,9 @@ AUTHOR:     L. Rossman
 
 /*
 ---------------------------------------------------------------------
-   Conversion macros to be used in place of functions             
+   Conversion macros to be used in place of functions
 ---------------------------------------------------------------------
-*/ 
+*/
 #define INT(x)   ((int)(x))                   /* integer portion of x  */
 #define FRAC(x)  ((x)-(int)(x))               /* fractional part of x  */
 #define ABS(x)   (((x)<0) ? -(x) : (x))       /* absolute value of x   */
@@ -98,10 +98,10 @@ AUTHOR:     L. Rossman
 /*
 ------------------------------------------------------
    Macro to evaluate function x with error checking
-   (Fatal errors are numbered higher than 100)             
+   (Fatal errors are numbered higher than 100)
 ------------------------------------------------------
 */
-#define ERRCODE(x) (errcode = ((errcode>100) ? (errcode) : (x))) 
+#define ERRCODE(x) (errcode = ((errcode>100) ? (errcode) : (x)))
 
 /*
 ------------------------------------------------------
@@ -113,11 +113,11 @@ AUTHOR:     L. Rossman
 
 /*
 ------------------------------------------------------
-   Global Data Structures                             
+   Global Data Structures
 ------------------------------------------------------
 */
 typedef  double        REAL;
-typedef  long          INT4;
+typedef  int           INT4;
 
 struct IDstring    /* Holds component ID labels */
 {
@@ -272,7 +272,7 @@ struct   Sadjlist         /* NODE ADJACENCY LIST ITEM */
    struct Sadjlist *next; /* Next item in list        */
 };
 /* Pointer to adjacency list item */
-typedef struct Sadjlist *Padjlist; 
+typedef struct Sadjlist *Padjlist;
 
 struct  Sseg              /* PIPE SEGMENT record used */
 {                         /*   for WQ routing         */
@@ -395,7 +395,7 @@ typedef struct            /* FIELD OBJECT of report table */
                  {MIX1,         /*   1-compartment model               */
                   MIX2,         /*   2-compartment model               */
                   FIFO,         /*   First in, first out model         */
-                  LIFO};        /*   Last in, first out model          */ 
+                  LIFO};        /*   Last in, first out model          */
 
  enum TstatType                 /* Time series statistics              */
                  {SERIES,       /*   none                              */
@@ -446,4 +446,3 @@ enum HdrType                    /* Type of table heading   */
                   ENERHDR,      /*  Energy Usage           */
                   NODEHDR,      /*  Node Results           */
                   LINKHDR};     /*  Link Results           */
-
