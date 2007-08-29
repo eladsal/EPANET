@@ -41,13 +41,6 @@
 # make clean
 #     -Removes object and library files, returning the build directory
 #      to its pristine state.
-# make uninstall
-#     -Undoes 'make install'
-# make check
-#     -Checks the installation by running EPANET against defined
-#      test networks and comparing the results quantitatively to a database
-#      of known correct results.  Reports comparison statistics and
-#      pass/fail status for each test.
 
 SHELL = /bin/sh
 
@@ -65,12 +58,12 @@ MSVClibexe = c:\\Program Files\\Microsoft Visual Studio .NET 2003\\Vc7\\bin\\lib
 # Target filenames
 # svnname.sh constructs a name: <prefix><root><Rev><postfix>
 # where <Rev> is the atomic revision number of the svn repo.
-epanetsvnpath = ../../../trunk
+epanetsvnpath = ../../..
 epanetrootname := $(shell ../svnname.sh $(epanetsvnpath) "" epanet_gcc_ "")
 dllname := $(epanetrootname).dll
 defname := $(epanetrootname).def
 implibname = lib$(dllname).a
-exename := $(epanetrootname).exe
+exename := $(epanetrootname)
 # Shell wrapper
 runcmdtemplate = runepanet.sh.template
 runcmdname = $(shell ../svnname.sh $(epanetsvnpath) "" runepanet_ .sh)
@@ -79,11 +72,9 @@ MScmdtemplate = CreateMSLib.bat.template
 MScmdname = $(shell ../svnname.sh $(epanetsvnpath) "" CreateMSLib_ .bat)
 # Location of EPANET toolkit includes
 epanetincludedir = ../../include
-epanetcommondir = ../../common
 # Search path for sources
 epanetsrcdir = ../../src
-commonsrcdir = ../../common
-VPATH = $(epanetsrcdir):$(commonsrcdir)
+VPATH = $(epanetsrcdir):$(epanetincludedir)
 
 # Install directories
 winprefix = $(shell cygpath -w $$HOME)
@@ -103,8 +94,8 @@ docdir = $(datarootdir)/doc/epanet
 CC = $(MinGWdir)/bin/gcc
 dlltool = $(MinGWdir)/bin/dlltool
 CFLAGS = -g -O
-CPPFLAGS = -I $(srcdir) -I $(epanetincludedir) -I $(epanetcommondir)
-LDFLAGS = -L . -W1,-rpath,$(libdir)
+CPPFLAGS = -I $(srcdir) -I $(epanetincludedir)
+LDFLAGS = -L . -W1,-rpath,$(libdir) -lm
 
 # Installer
 INSTALL = install
@@ -117,6 +108,9 @@ epanet_objs=hash.o hydraul.o inpfile.o input1.o input2.o \
 	    rules.o smatrix.o
 # Epanet header files
 epanet_heads=enumstxt.h funcs.h hash.h mempool.h text.h toolkit.h types.h vars.h
+epanet_main_heads=epanet2.h
+# Epanet main program
+epanet_main=epanet
 
 .PHONY: all
 all: $(dllname) $(exename)
@@ -124,14 +118,14 @@ all: $(dllname) $(exename)
 $(dllname): $(epanet_objs)
 #	$(dlltool) -z $(defname) --dllname $(dllname) --output-lib $(implibname) $^
 #	$(CC) $(CFLAGS) $(LDFLAGS) -shared -o $@ $(defname) $^
-	$(CC) $(CFLAGS) $(CPPFLAGS) -DDLL -c $(epanetsrcdir)/epanet.c
+	$(CC) $(CFLAGS) $(CPPFLAGS) -D DLL -c $(epanetsrcdir)/epanet.c
 	$(CC) $(CFLAGS) $(LDFLAGS) -shared -o $@ epanet.o $^ -Wl,--output-def,$(defname)
 	$(CC) $(CFLAGS) $(LDFLAGS) -shared -o $@ epanet.o $^ -Wl,--kill-at
 	$(dlltool) -d $(defname) --dllname $@ --output-lib $(implibname) --kill-at
 
-$(exename): $(epanet_objs)
-	$(CC) $(CFLAGS) $(CPPFLAGS) -DCLE -c $(epanetsrcdir)/epanet.c
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ epanet.o $^
+$(exename): $(dllname) $(epanet_main_heads)
+	$(CC) $(CFLAGS) $(CPPFLAGS) -D CLE -c $(epanetsrcdir)/$(epanet_main).c
+	$(CC) $(CFLAGS) -o $@ $(epanet_main).o -l$(exename) $(LDFLAGS)
 
 $(epanet_objs): $(epanet_heads)
 
@@ -160,4 +154,4 @@ check:
 
 .PHONY: clean
 clean:
-	-/bin/rm *.o $(dllname) $(defname) $(implibname) $(exename) $(runcmdname) $(MScmdname)
+	-/bin/rm *.o $(dllname) $(defname) $(implibname) $(exename).exe $(runcmdname) $(MScmdname)

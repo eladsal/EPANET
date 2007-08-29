@@ -24,13 +24,6 @@
 # make clean
 #     -Removes object and library files, returning the build directory
 #      to its pristine state.
-# make uninstall
-#     -Undoes 'make install'
-# make check
-#     -Checks the installation by running EPANET against defined
-#      test networks and comparing the results quantitatively to a database
-#      of known correct results.  Reports comparison statistics and
-#      pass/fail status for each test.
 
 # You may wish to change the install path 'prefix',
 # or the compiler flags, but these defaults should be fine.
@@ -49,16 +42,13 @@ runcmdtemplate = runepanet.sh.template
 runcmdname = $(shell ../svnname.sh $(epanetsvnpath) "" runepanet_ .sh)
 # Location of EPANET toolkit includes
 epanetincludedir = ../../include
-epanetcommondir = ../../common
 # Search path for sources
 epanetsrcdir = ../../src
-commonsrcdir = ../../common
-VPATH = $(epanetsrcdir):$(commonsrcdir)
+VPATH = $(epanetsrcdir):$(epanetincludedir)
 
 # Install directories
 prefix = ~
 exec_prefix = $(prefix)
-srcdir = .
 libdir = $(exec_prefix)/lib
 bindir = $(exec_prefix)/bin
 includedir = $(prefix)/include
@@ -68,7 +58,7 @@ docdir = $(datarootdir)/doc/epanet
 # Compiler and flags
 CC = gcc
 CFLAGS = -g -O -fPIC
-CPPFLAGS = -I $(srcdir) -I $(epanetincludedir) -I $(epanetcommondir)
+CPPFLAGS = -I $(epanetincludedir)
 LDFLAGS = -L . -W1,-rpath,$(libdir) -lm
 
 # Installer
@@ -82,17 +72,21 @@ epanet_objs=hash.o hydraul.o inpfile.o input1.o input2.o \
 	    rules.o smatrix.o
 # Epanet header files
 epanet_heads=enumstxt.h funcs.h hash.h mempool.h text.h toolkit.h types.h vars.h
+# Epanet main program
+epanet_main=epanet
+# Epanet main program header files
+epanet_main_heads=epanet2.h
 
 .PHONY: all
 all: $(libname) $(exename)
 
 $(libname): $(epanet_objs)
-	$(CC) $(CFLAGS) $(CPPFLAGS) -DSOL -c $(epanetsrcdir)/epanet.c
-	$(CC) $(CFLAGS) $(LDFLAGS) -shared -o $@ epanet.o $^
+	$(CC) $(CFLAGS) $(CPPFLAGS) -D SOL -c $(epanetsrcdir)/$(epanet_main).c
+	$(CC) $(CFLAGS) $(LDFLAGS) -shared -o $@ $(epanet_main).o $^
 
-$(exename): $(epanet_objs)
-	$(CC) $(CFLAGS) $(CPPFLAGS) -DCLE -c $(epanetsrcdir)/epanet.c
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ epanet.o $^
+$(exename): $(libname) $(epanet_main_heads)
+	$(CC) $(CFLAGS) $(CPPFLAGS) -D CLE -c $(epanetsrcdir)/$(epanet_main).c
+	$(CC) $(CFLAGS) -o $@ $(epanet_main).o -l$(epanetrootname) $(LDFLAGS)
 
 $(epanet_objs): $(epanet_heads)
 
