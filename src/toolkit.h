@@ -7,7 +7,7 @@ VERSION:    2.00
 DATE:       5/8/00
             10/25/00
             3/1/01
-            3/13/07
+            8/15/07    (2.00.11)
 AUTHOR:     L. Rossman
             US EPA - NRMRL
 
@@ -207,5 +207,3 @@ AUTHOR:     L. Rossman
  int  DLLEXPORT ENsetstatusreport(int);
  int  DLLEXPORT ENsetqualtype(int, char *, char *, char *);
 
- int  DLLEXPORT ENaddpattern(char *);
- 

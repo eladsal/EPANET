@@ -5,6 +5,7 @@ OUTPUT.C -- Binary File Transfer Routines for EPANET Program
                                                                     
 VERSION:    2.00                                              
 DATE:       5/8/00
+            8/15/07    (2.00.11)
 AUTHOR:     L. Rossman
             US EPA - NRMRL
                                                                     
@@ -23,7 +24,7 @@ AUTHOR:     L. Rossman
 #include "vars.h"
 
 /* Macro to write x[1] to x[n] to file OutFile: */
-#define   FSAVE(n)  (fwrite(x+1,sizeof(float),(n),OutFile))
+#define   FSAVE(n)  (fwrite(x+1,sizeof(REAL4),(n),OutFile))
 
 int  savenetdata()
 /*
@@ -37,14 +38,14 @@ int  savenetdata()
 {
    int   i,nmax;
    INT4  *ibuf;
-   float *x;
+   REAL4 *x;
    int   errcode = 0;
 
    /* Allocate buffer arrays */
    nmax = MAX(Nnodes,Nlinks) + 1;
    nmax = MAX(nmax,15);
    ibuf = (INT4 *) calloc(nmax, sizeof(INT4));
-   x = (float *) calloc(nmax, sizeof(float));
+   x = (REAL4 *) calloc(nmax, sizeof(REAL4));
    ERRCODE(MEMCHECK(ibuf));
    ERRCODE(MEMCHECK(x));
 
@@ -52,7 +53,10 @@ int  savenetdata()
    {
       /* Write integer variables to OutFile */
       ibuf[0] = MAGICNUMBER;
-      ibuf[1] = VERSION;
+
+/*** CODEVERSION replaces VERSION ***/                                         //(2.00.11 - LR)
+      ibuf[1] = CODEVERSION;                                                   //(2.00.11 - LR)
+
       ibuf[2] = Nnodes;
       ibuf[3] = Ntanks;
       ibuf[4] = Nlinks;
@@ -96,22 +100,22 @@ int  savenetdata()
       /* Write tank information to OutFile.*/
       for (i=1; i<=Ntanks; i++) ibuf[i] = Tank[i].Node;
       fwrite(ibuf+1,sizeof(INT4),Ntanks,OutFile);
-      for (i=1; i<=Ntanks; i++) x[i] = Tank[i].A;
+      for (i=1; i<=Ntanks; i++) x[i] = (REAL4)Tank[i].A;
       FSAVE(Ntanks);
 
       /* Save node elevations to OutFile.*/
-      for (i=1; i<=Nnodes; i++) x[i] = Node[i].El*Ucf[ELEV];
+      for (i=1; i<=Nnodes; i++) x[i] = (REAL4)(Node[i].El*Ucf[ELEV]);
       FSAVE(Nnodes);
 
       /* Save link lengths & diameters to OutFile.*/
-      for (i=1; i<=Nlinks; i++) x[i] = Link[i].Len*Ucf[ELEV];
+      for (i=1; i<=Nlinks; i++) x[i] = (REAL4)(Link[i].Len*Ucf[ELEV]);
       FSAVE(Nlinks);
       for (i=1; i<=Nlinks; i++)
       {
          if (Link[i].Type != PUMP)
-            x[i] = Link[i].Diam*Ucf[DIAM];
+            x[i] = (REAL4)(Link[i].Diam*Ucf[DIAM]);
          else
-            x[i] = 0.0;
+            x[i] = 0.0f;
       }
       if (FSAVE(Nlinks) < (unsigned)Nlinks) errcode = 308;
    }
@@ -136,35 +140,40 @@ int  savehyd(long *htime)
    int i;
    INT4 t;
    int errcode = 0;
+   REAL4 *x = (REAL4 *) calloc(MAX(Nnodes,Nlinks) + 1, sizeof(REAL4));
+   if ( x == NULL ) return 101;
 
    /* Save current time (htime) */
    t = *htime;
    fwrite(&t,sizeof(INT4),1,HydFile);
 
    /* Save current nodal demands (D) */
-   fwrite(D+1,sizeof(float),Nnodes,HydFile);
+   for (i=1; i<=Nnodes; i++) x[i] = (REAL4)D[i];
+   fwrite(x+1,sizeof(REAL4),Nnodes,HydFile);
 
-   /* Copy heads (H) to buffer of floats (X) and save buffer */
-   for (i=1; i<=Nnodes; i++) X[i] = H[i];
-   fwrite(X+1,sizeof(float),Nnodes,HydFile);
+   /* Copy heads (H) to buffer of floats (x) and save buffer */
+   for (i=1; i<=Nnodes; i++) x[i] = (REAL4)H[i];
+   fwrite(x+1,sizeof(REAL4),Nnodes,HydFile);
 
    /* Force flow in closed links to be zero then save flows */
    for (i=1; i<=Nlinks; i++)
    {
-      if (S[i] <= CLOSED) X[i] = 0.0;
-      else X[i] = Q[i];
+      if (S[i] <= CLOSED) x[i] = 0.0f;
+      else x[i] = (REAL4)Q[i];
    }
-   fwrite(X+1,sizeof(float),Nlinks,HydFile);
+   fwrite(x+1,sizeof(REAL4),Nlinks,HydFile);
 
-   /* Copy link status to buffer of floats (X) & write buffer */
-   for (i=1; i<=Nlinks; i++) X[i] = S[i];
-   fwrite(X+1,sizeof(float),Nlinks,HydFile);
+   /* Copy link status to buffer of floats (x) & write buffer */
+   for (i=1; i<=Nlinks; i++) x[i] = (REAL4)S[i];
+   fwrite(x+1,sizeof(REAL4),Nlinks,HydFile);
 
    /* Save link settings & check for successful write-to-disk */
    /* (We assume that if any of the previous fwrites failed,  */
    /* then this one will also fail.) */
-   if (fwrite(K+1,sizeof(float),Nlinks,HydFile) < (unsigned)Nlinks)
+   for (i=1; i<=Nlinks; i++) x[i] = (REAL4)K[i];
+   if (fwrite(x+1,sizeof(REAL4),Nlinks,HydFile) < (unsigned)Nlinks)
       errcode = 308;
+   free(x);
    return(errcode);
 }                        /* End of savehyd */
 
@@ -200,47 +209,48 @@ int  saveenergy()
 {
     int   i,j;
     INT4  index;
-    float x[6];             /* work array */
-    float hdur,             /* total duration in hours */
-          t;                /* pumping duration */
+    REAL4 x[6];              /* work array */
+    double hdur,             /* total duration in hours */
+           t;                /* pumping duration */
 
-    hdur = (double) Dur / 3600.0;
+    hdur = Dur / 3600.0;
     for (i=1; i<=Npumps; i++)
     {
         if (hdur == 0.0)
         {
-            for (j=0; j<5; j++) x[j] = Pump[i].Energy[j];
-            x[5] = Pump[i].Energy[5]*24.0;
+            for (j=0; j<5; j++) x[j] = (REAL4)Pump[i].Energy[j];
+            x[5] = (REAL4)(Pump[i].Energy[5]*24.0);
         }
         else
         {
             t = Pump[i].Energy[0];
-            x[0] = t/hdur;
-            x[1] = 0.0;
-            x[2] = 0.0;
-            x[3] = 0.0;
-            x[4] = 0.0;
+            x[0] = (REAL4)(t/hdur);
+            x[1] = 0.0f;
+            x[2] = 0.0f;
+            x[3] = 0.0f;
+            x[4] = 0.0f;
             if (t > 0.0)
             {
-                x[1] = Pump[i].Energy[1]/t;
-                x[2] = Pump[i].Energy[2]/t;
-                x[3] = Pump[i].Energy[3]/t;
+                x[1] = (REAL4)(Pump[i].Energy[1]/t);
+                x[2] = (REAL4)(Pump[i].Energy[2]/t);
+                x[3] = (REAL4)(Pump[i].Energy[3]/t);
             }
-            x[4] = Pump[i].Energy[4];
-            x[5] = Pump[i].Energy[5]*24.0/hdur;
+            x[4] = (REAL4)Pump[i].Energy[4];
+            x[5] = (REAL4)(Pump[i].Energy[5]*24.0/hdur);
         }
-        x[0] *= 100.0;
-        x[1] *= 100.0;
+        x[0] *= 100.0f;
+        x[1] *= 100.0f;
         /* Compute Kw-hr per MilGal (or per cubic meter) */
-        if (Unitsflag == SI) x[2] = x[2]/LPSperCFS/3600.*1000;
-        else                 x[2] = x[2]/GPMperCFS/60.0*1.0e6;
+        if (Unitsflag == SI) x[2] *= (REAL4)(1000.0/LPSperCFS/3600.0);
+        else                 x[2] *= (REAL4)(1.0e6/GPMperCFS/60.0);
         for (j=0; j<6; j++) Pump[i].Energy[j] = x[j];
         index = Pump[i].Link;
         if (fwrite(&index,sizeof(INT4),1,OutFile) < 1) return(308);
-        if (fwrite(x,sizeof(float), 6, OutFile) < 6) return(308);
+        if (fwrite(x, sizeof(REAL4), 6, OutFile) < 6) return(308);
     }
     Emax = Emax*Dcost;
-    if (fwrite(&Emax, sizeof(float), 1, OutFile) < 1) return(308);
+    x[0] = (REAL4)Emax;
+    if (fwrite(&x[0], sizeof(REAL4), 1, OutFile) < 1) return(308);
     return(0);
 }
 
@@ -261,16 +271,30 @@ int  readhyd(long *hydtime)
 {
    int   i;
    INT4  t;
-   if (fread(&t,sizeof(INT4),1,HydFile) < 1)  return(0);
+   int   result = 1;
+   REAL4 *x = (REAL4 *) calloc(MAX(Nnodes,Nlinks) + 1, sizeof(REAL4));
+   if ( x == NULL ) return 0;
+
+   if (fread(&t,sizeof(INT4),1,HydFile) < 1)  result = 0;
    *hydtime = t;
-   if (fread(D+1,sizeof(float),Nnodes,HydFile) < (unsigned)Nnodes) return(0);
-   if (fread(X+1,sizeof(float),Nnodes,HydFile) < (unsigned)Nnodes) return(0);
-   for (i=1; i<=Nnodes; i++) H[i] = X[i];
-   if (fread(Q+1,sizeof(float),Nlinks,HydFile) < (unsigned)Nlinks) return(0);
-   if (fread(X+1,sizeof(float),Nlinks,HydFile) < (unsigned)Nlinks) return(0);
-   for (i=1; i<=Nlinks; i++) S[i] = (char) X[i];
-   if (fread(K+1,sizeof(float),Nlinks,HydFile) < (unsigned)Nlinks) return(0);
-   return(1);
+
+   if (fread(x+1,sizeof(REAL4),Nnodes,HydFile) < (unsigned)Nnodes) result = 0;
+   else for (i=1; i<=Nnodes; i++) D[i] = x[i];
+
+   if (fread(x+1,sizeof(REAL4),Nnodes,HydFile) < (unsigned)Nnodes) result = 0;
+   else for (i=1; i<=Nnodes; i++) H[i] = x[i];
+
+   if (fread(x+1,sizeof(REAL4),Nlinks,HydFile) < (unsigned)Nlinks) result = 0;
+   else for (i=1; i<=Nlinks; i++) Q[i] = x[i];
+
+   if (fread(x+1,sizeof(REAL4),Nlinks,HydFile) < (unsigned)Nlinks) result = 0;
+   else for (i=1; i<=Nlinks; i++) S[i] = (char) x[i];
+
+   if (fread(x+1,sizeof(REAL4),Nlinks,HydFile) < (unsigned)Nlinks) result = 0;
+   else for (i=1; i<=Nlinks; i++) K[i] = x[i];
+
+   free(x);
+   return result;
 }                        /* End of readhyd */
 
 
@@ -302,15 +326,17 @@ int  saveoutput()
 {
    int   j;
    int   errcode = 0;
+   REAL4 *x = (REAL4 *) calloc(MAX(Nnodes,Nlinks) + 1, sizeof(REAL4));
+   if ( x == NULL ) return 101;
 
    /* Write out node results, then link results */
-   for (j=DEMAND; j<=QUALITY; j++)  ERRCODE(nodeoutput(j,X,Ucf[j]));
-   for (j=FLOW; j<=FRICTION; j++) ERRCODE(linkoutput(j,X,Ucf[j]));
+   for (j=DEMAND; j<=QUALITY; j++)  ERRCODE(nodeoutput(j,x,Ucf[j]));
+   for (j=FLOW; j<=FRICTION; j++) ERRCODE(linkoutput(j,x,Ucf[j]));
    return(errcode);
 }                        /* End of saveoutput */
 
 
-int  nodeoutput(int j, float *x, float ucf)
+int  nodeoutput(int j, REAL4 *x, double ucf)
 /*
 **--------------------------------------------------------------
 **   Input:   j   = type of node variable                         
@@ -327,26 +353,26 @@ int  nodeoutput(int j, float *x, float ucf)
    switch(j)
    {
        case DEMAND:    for (i=1; i<=Nnodes; i++)
-                          x[i] = D[i]*ucf;
+                          x[i] = (REAL4)(D[i]*ucf);
                        break;
        case HEAD:      for (i=1; i<=Nnodes; i++)
-                          x[i] = H[i]*ucf;
+                          x[i] = (REAL4)(H[i]*ucf);
                        break;
        case PRESSURE:  for (i=1; i<=Nnodes; i++)
-                          x[i] = (H[i] - Node[i].El)*ucf;
+                          x[i] = (REAL4)((H[i] - Node[i].El)*ucf);
                        break;
        case QUALITY:   for (i=1; i<=Nnodes; i++)
-                          x[i] = C[i]*ucf;
+                          x[i] = (REAL4)(C[i]*ucf);
    }
 
    /* Write x[1] to x[Nnodes] to output file */
-   if (fwrite(x+1,sizeof(float),Nnodes,TmpOutFile) < (unsigned)Nnodes)
+   if (fwrite(x+1,sizeof(REAL4),Nnodes,TmpOutFile) < (unsigned)Nnodes)
       return(308);
    return(0);
 }                        /* End of nodeoutput */
 
 
-int  linkoutput(int j, float *x, float ucf)
+int  linkoutput(int j, float *x, double ucf)
 /*
 **----------------------------------------------------------------
 **   Input:   j   = type of link variable                         
@@ -358,43 +384,43 @@ int  linkoutput(int j, float *x, float ucf)
 */
 {
    int i;
-   float a,h,q;
+   double a,h,q,f;
 
    /* Load computed results (in proper units) into buffer x */
    switch(j)
    {
       case FLOW:      for (i=1; i<=Nlinks; i++)
-                         x[i] = Q[i]*ucf;
+                         x[i] = (REAL4)(Q[i]*ucf);
                       break;
       case VELOCITY:  for (i=1; i<=Nlinks; i++)
                       {
-                         if (Link[i].Type == PUMP) x[i] = 0.0;
+                         if (Link[i].Type == PUMP) x[i] = 0.0f;
                          else
                          {
                             q = ABS(Q[i]);
                             a = PI*SQR(Link[i].Diam)/4.0;
-                            x[i] = q/a*ucf;
+                            x[i] = (REAL4)(q/a*ucf);
                          }
                       }
                       break;
       case HEADLOSS:  for (i=1; i<=Nlinks; i++)
                       {
-                         if (S[i] <= CLOSED) x[i] = 0.0;
+                         if (S[i] <= CLOSED) x[i] = 0.0f;
                          else
                          {
                             h = H[Link[i].N1] - H[Link[i].N2];
                             if (Link[i].Type != PUMP) h = ABS(h);
                             if (Link[i].Type <= PIPE)
-                               x[i] = 1000.0*h/Link[i].Len;
-                            else x[i] = h*ucf;
+                               x[i] = (REAL4)(1000.0*h/Link[i].Len);
+                            else x[i] = (REAL4)(h*ucf);
                          }
                       }
                       break;
       case LINKQUAL:  for (i=1; i<=Nlinks; i++)
-                         x[i] = avgqual(i)*ucf;
+                         x[i] = (REAL4)(avgqual(i)*ucf);
                       break;
       case STATUS:    for (i=1; i<=Nlinks; i++)
-                         x[i] = S[i];
+                         x[i] = (REAL4)S[i];
                       break;
       case SETTING:   for (i=1; i<=Nlinks; i++)
                       {
@@ -402,26 +428,26 @@ int  linkoutput(int j, float *x, float ucf)
                              switch (Link[i].Type)
                              {
                                case CV:   
-                               case PIPE: x[i] = K[i];
+                               case PIPE: x[i] = (REAL4)K[i];
                                           break;
-                               case PUMP: x[i] = K[i];
+                               case PUMP: x[i] = (REAL4)K[i];
                                           break;
                                case PRV:
                                case PSV:
-                               case PBV:  x[i] = K[i]*Ucf[PRESSURE];
+                               case PBV:  x[i] = (REAL4)(K[i]*Ucf[PRESSURE]);
                                           break;
-                               case FCV:  x[i] = K[i]*Ucf[FLOW];
+                               case FCV:  x[i] = (REAL4)(K[i]*Ucf[FLOW]);
                                           break;
-                               case TCV:  x[i] = K[i];
+                               case TCV:  x[i] = (REAL4)K[i];
                                           break;
-                               default:   x[i] = 0.0;
+                               default:   x[i] = 0.0f;
                              }
-                         else x[i] = 0.0;
+                         else x[i] = 0.0f;
                       }
                       break;
       case REACTRATE: /* Overall reaction rate in mass/L/day */
-                      if (Qualflag == NONE) memset(x,0,(Nlinks+1 )*sizeof(float));
-                      else for (i=1; i<=Nlinks; i++) x[i] = R[i]*ucf;
+                      if (Qualflag == NONE) memset(x,0,(Nlinks+1 )*sizeof(REAL4));
+                      else for (i=1; i<=Nlinks; i++) x[i] = (REAL4)(R[i]*ucf);
                       break;
       case FRICTION:   /* f = 2ghd/(Lu^2) where f = friction factor */
                        /* u = velocity, g = grav. accel., h = head  */
@@ -431,15 +457,16 @@ int  linkoutput(int j, float *x, float ucf)
                           if (Link[i].Type <= PIPE && ABS(Q[i]) > TINY)
                           {
                              h = ABS(H[Link[i].N1] - H[Link[i].N2]);
-                             x[i] = 39.725*h*pow(Link[i].Diam,5)/Link[i].Len/SQR(Q[i]);
+                             f = 39.725*h*pow(Link[i].Diam,5)/Link[i].Len/SQR(Q[i]);
+                             x[i] = (REAL4)f;
                           }
-                          else x[i] = 0.0;
+                          else x[i] = 0.0f;
                        }
                        break;
    }
 
    /* Write x[1] to x[Nlinks] to output file */
-   if (fwrite(x+1,sizeof(float),Nlinks,TmpOutFile) < (unsigned)Nlinks)
+   if (fwrite(x+1,sizeof(REAL4),Nlinks,TmpOutFile) < (unsigned)Nlinks)
       return(308);
    return(0);
 }                        /* End of linkoutput */
@@ -456,14 +483,18 @@ int  savefinaloutput()
 */
 {
    int errcode = 0;
+   REAL4 *x;
 
 /* Save time series statistic if computed */
    if (Tstatflag != SERIES && TmpOutFile != NULL)
    {
-      ERRCODE(savetimestat(X,NODEHDR));
-      ERRCODE(savetimestat(X,LINKHDR));
+      x = (REAL4 *) calloc(MAX(Nnodes,Nlinks) + 1, sizeof(REAL4)); 
+      if ( x == NULL ) return 101;
+      ERRCODE(savetimestat(x,NODEHDR));
+      ERRCODE(savetimestat(x,LINKHDR));
       if (!errcode) Nperiods = 1;
       fclose(TmpOutFile);
+      free(x);
    }
 
 /* Save avg. reaction rates & file epilog */
@@ -476,7 +507,7 @@ int  savefinaloutput()
 }
 
 
-int  savetimestat(float *x, char objtype)
+int  savetimestat(REAL4 *x, char objtype)
 /*
 **--------------------------------------------------------------
 **   Input:   *x  = buffer for node values
@@ -507,7 +538,7 @@ int  savetimestat(float *x, char objtype)
    */
       startbyte = 0;
       skipbytes = (Nnodes*(QUALITY-DEMAND) +
-                   Nlinks*(FRICTION-FLOW+1))*sizeof(float);
+                   Nlinks*(FRICTION-FLOW+1))*sizeof(REAL4);
       n = Nnodes;
       n1 = DEMAND;
       n2 = QUALITY;
@@ -519,9 +550,9 @@ int  savetimestat(float *x, char objtype)
       over node output for all node variables plus link output for
       all link variables minus 1.
    */
-      startbyte = Nnodes*(QUALITY-DEMAND+1)*sizeof(float);
+      startbyte = Nnodes*(QUALITY-DEMAND+1)*sizeof(REAL4);
       skipbytes = (Nnodes*(QUALITY-DEMAND+1) +
-                   Nlinks*(FRICTION-FLOW))*sizeof(float);
+                   Nlinks*(FRICTION-FLOW))*sizeof(REAL4);
       n = Nlinks;
       n1 = FLOW;
       n2 = FRICTION;
@@ -546,14 +577,14 @@ int  savetimestat(float *x, char objtype)
          }
    
          /* Position temp output file at start of output */
-         fseek(TmpOutFile, startbyte + (j-n1)*n*sizeof(float), SEEK_SET);
+         fseek(TmpOutFile, startbyte + (j-n1)*n*sizeof(REAL4), SEEK_SET);
 
          /* Process each time period */
          for (p=1; p<=Nperiods; p++)
          {
 
             /* Get output results for time period & update stats */
-            fread(x+1, sizeof(float), n, TmpOutFile);
+            fread(x+1, sizeof(REAL4), n, TmpOutFile);
             for (i=1; i<=n; i++)
             {
                xx = x[i];
@@ -594,11 +625,11 @@ int  savetimestat(float *x, char objtype)
          {
             for (i=1; i<=n; i++)
             {
-               if (x[i] < 0.5) x[i] = CLOSED;
-               else            x[i] = OPEN;
+               if (x[i] < 0.5f) x[i] = CLOSED;
+               else             x[i] = OPEN;
             }
          }
-         if (fwrite(x+1, sizeof(float), n, OutFile) < (unsigned) n) errcode = 308;
+         if (fwrite(x+1, sizeof(REAL4), n, OutFile) < (unsigned) n) errcode = 308;
 
          /* Update internal output variables where applicable */
          if (objtype == NODEHDR) switch (j)
@@ -621,8 +652,7 @@ int  savetimestat(float *x, char objtype)
 }
 
 
-
-int  savenetreacts(REAL wbulk, REAL wwall, REAL wtank, REAL wsource)
+int  savenetreacts(double wbulk, double wwall, double wtank, double wsource)
 /*
 **-----------------------------------------------------
 **  Writes average network-wide reaction rates (in
@@ -631,15 +661,15 @@ int  savenetreacts(REAL wbulk, REAL wwall, REAL wtank, REAL wsource)
 */
 {
    int errcode = 0;
-   float t;
-   float w[4];
-   if (Dur > 0) t = (float)Dur/3600.;
+   double t;
+   REAL4 w[4];
+   if (Dur > 0) t = (double)Dur/3600.;
    else t = 1.;
-   w[0] = wbulk/t;
-   w[1] = wwall/t;
-   w[2] = wtank/t;
-   w[3] = wsource/t;
-   if (fwrite(w,sizeof(float),4,OutFile) < 4) errcode = 308;
+   w[0] = (REAL4)(wbulk/t);
+   w[1] = (REAL4)(wwall/t);
+   w[2] = (REAL4)(wtank/t);
+   w[3] = (REAL4)(wsource/t);
+   if (fwrite(w,sizeof(REAL4),4,OutFile) < 4) errcode = 308;
    return(errcode);
 }
 

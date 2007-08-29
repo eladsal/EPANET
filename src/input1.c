@@ -8,8 +8,6 @@ DATE:       5/30/00
             9/7/00
             11/19/01
             6/24/02
-            12/13/06
-            1/24/07
 AUTHOR:     L. Rossman
             US EPA - NRMRL
 
@@ -103,11 +101,9 @@ void  setdefaults()
    strncpy(ChemName,t_CHEMICAL,MAXID);
    strncpy(ChemUnits,u_MGperL,MAXID);
    strncpy(DefPatID,DEFPATID,MAXID);
-   strncpy(AdjustPatID,"",MAXID);                                              /*** Added 12/13/06 ***/
    Hydflag   = SCRATCH;         /* No external hydraulics file    */
    Qualflag  = NONE;            /* No quality simulation          */
    Formflag  = HW;              /* Use Hazen-Williams formula     */
-   Igrateflag = STANDARD;       /* Use std. Euler integration     */           /*** Added 1/24/07 ***/
    Unitsflag = US;              /* US unit system                 */
    Flowflag  = GPM;             /* Flow units are gpm             */
    Pressflag = PSI;             /* Pressure units are psi         */
@@ -140,7 +136,6 @@ void  setdefaults()
    Viscos    = MISSING;         /* Temporary viscosity            */
    SpGrav    = SPGRAV;          /* Default specific gravity       */
    DefPat    = 0;               /* Default demand pattern index   */
-   AdjustPat = 0;               /* No demand adjustment pattern   */           /*** Added 12/13/06 ***/
    Epat      = 0;               /* No energy price pattern        */
    Ecost     = 0.0;             /* Zero unit energy cost          */
    Dcost     = 0.0;             /* Zero energy demand charge      */
@@ -198,7 +193,7 @@ void  adjustdata()
 */
 {
    int   i;
-   float ucf;                   /* Unit conversion factor */
+   double ucf;                   /* Unit conversion factor */
    Pdemand demand;              /* Pointer to demand record */
 
 /* Use 1 hr pattern & report time step if none specified */
@@ -323,8 +318,8 @@ int  inittanks()
 **---------------------------------------------------------------
 */
 {
-    int   i,j,n;
-    float a;
+    int   i,j,n = 0;
+    double a;
     int   errcode = 0,
           levelerr;
 
@@ -389,12 +384,12 @@ void  initunits()
 **--------------------------------------------------------------
 */
 {
-   float  dcf,  /* distance conversion factor      */
-          ccf,  /* concentration conversion factor */
-          qcf,  /* flow conversion factor          */
-          hcf,  /* head conversion factor          */
-          pcf,  /* pressure conversion factor      */
-          wcf;  /* energy conversion factor        */
+   double  dcf,  /* distance conversion factor      */
+           ccf,  /* concentration conversion factor */
+           qcf,  /* flow conversion factor          */
+           hcf,  /* head conversion factor          */
+           pcf,  /* pressure conversion factor      */
+           wcf;  /* energy conversion factor        */
 
    if (Unitsflag == SI)                            /* SI units */
    {
@@ -494,7 +489,7 @@ void  convertunits()
 */
 {
    int   i,j,k;
-   float ucf;        /* Unit conversion factor */
+   double ucf;        /* Unit conversion factor */
    Pdemand demand;   /* Pointer to demand record */
 
 /* Convert nodal elevations & initial WQ */

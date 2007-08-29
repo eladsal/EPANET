@@ -6,7 +6,7 @@ REPORT.C -- Reporting Routines for EPANET Program
 VERSION:    2.00                                               
 DATE:       5/30/00
             6/24/02
-            1/24/07                                          
+            8/15/07  (2.00.11)
 AUTHOR:     L. Rossman
             US EPA - NRMRL
                                                                     
@@ -49,9 +49,8 @@ extern char *StatTxt[];
 extern char *TstatTxt[];
 extern char *LogoTxt[];
 extern char *RptFormTxt[];
-extern char *RptIgrateTxt[];                                                   /*** Added 1/24/07 ***/
 
-typedef   float *Pfloat;
+typedef   REAL4 *Pfloat;
 void      writenodetable(Pfloat *);
 void      writelinktable(Pfloat *);
 
@@ -197,8 +196,6 @@ void  writesummary()
    writeline(s);
    sprintf(s,FMT25,RptFormTxt[Formflag]);
    writeline(s);
-   sprintf(s, FMT25a,RptIgrateTxt[Igrateflag]);                                /*** Added 1/24/07 ***/
-   writeline(s);                                                               /*** Added 1/24/07 ***/
    sprintf(s,FMT26,Hstep*Ucf[TIME],Field[TIME].Units);
    writeline(s);
    sprintf(s,FMT27,Hacc);
@@ -248,7 +245,7 @@ void  writesummary()
 }                        /* End of writesummary */
 
 
-void  writehydstat(int iter, float relerr)
+void  writehydstat(int iter, double relerr)
 /*
 **--------------------------------------------------------------
 **   Input:   iter   = # iterations to find hydraulic solution        
@@ -328,9 +325,9 @@ void  writeenergy()
 **-------------------------------------------------------------
 */
 {
-    int   j;
-    float csum;
-    char  s[MAXLINE+1];
+    int    j;
+    double csum;
+    char   s[MAXLINE+1];
     if (Npumps == 0) return;
     writeline(" ");
     writeheader(ENERHDR,0);
@@ -404,7 +401,7 @@ int  writeresults()
    if (errcode) return(errcode);
    for (j=0; j<m; j++)
    {
-      x[j] = (float *) calloc(n, sizeof(float));
+      x[j] = (REAL4 *) calloc(n, sizeof(REAL4));
       ERRCODE( MEMCHECK(x[j]) );
    }
    if (errcode) return(errcode);
@@ -420,12 +417,12 @@ int  writeresults()
       /* Read in node results & write node table. */
       /* (Remember to offset x[j] by 1 because array is zero-based). */
       for (j=DEMAND; j<=QUALITY; j++)
-         fread((x[j-DEMAND])+1,sizeof(float),Nnodes,OutFile);
+         fread((x[j-DEMAND])+1,sizeof(REAL4),Nnodes,OutFile);
       if (nnv > 0 && Nodeflag > 0) writenodetable(x);
 
       /* Read in link results & write link table. */
       for (j=FLOW; j<=FRICTION; j++)
-         fread((x[j-FLOW])+1,sizeof(float),Nlinks,OutFile);
+         fread((x[j-FLOW])+1,sizeof(REAL4),Nlinks,OutFile);
       if (nlv > 0 && Linkflag > 0) writelinktable(x);
       Htime += Rstep;
    }
@@ -446,9 +443,9 @@ void  writenodetable(Pfloat *x)
 **---------------------------------------------------------------
 */
 {
-   int i,j;
-   char s[MAXLINE+1],s1[16];
-   float y[MAXVAR];
+   int    i,j;
+   char   s[MAXLINE+1],s1[16];
+   double y[MAXVAR];
 
    /* Write table header */
    writeheader(NODEHDR,0);
@@ -508,9 +505,9 @@ void  writelinktable(Pfloat *x)
 **---------------------------------------------------------------
 */
 {
-   int i,j,k;
-   char s[MAXLINE+1],s1[16];
-   float y[MAXVAR];
+   int    i,j,k;
+   char   s[MAXLINE+1],s1[16];
+   double y[MAXVAR];
 
    /* Write table header */
    writeheader(LINKHDR,0);
@@ -711,7 +708,7 @@ void  writeline(char *s)
 }                        /* End of writeline */
 
 
-void  writerelerr(int iter, float relerr)
+void  writerelerr(int iter, double relerr)
 /*
 **-----------------------------------------------------------------
 **   Input:   iter   = current iteration of hydraulic solution    
@@ -745,8 +742,8 @@ void  writestatchange(int k, char s1, char s2)
 **--------------------------------------------------------------
 */
 {
-   int   j1,j2;
-   float setting;
+   int    j1,j2;
+   double setting;
 
 /* We have a pump/valve setting change instead of a status change */
    if (s1 == s2)
@@ -812,6 +809,7 @@ void writecontrolaction(int k, int i)
    writeline(Msg);
 }
 
+
 void writeruleaction(int k, char *ruleID)
 /*
 **--------------------------------------------------------------
@@ -828,8 +826,7 @@ void writeruleaction(int k, char *ruleID)
 }
 
 
-
-int  writehydwarn(int iter, float relerr)
+int  writehydwarn(int iter, double relerr)
 /*
 **--------------------------------------------------------------
 **   Input:   iter = # iterations to find hydraulic solution      
@@ -848,6 +845,7 @@ int  writehydwarn(int iter, float relerr)
 {
    int  i,j;
    char flag = 0;
+   char s;                                                                     //(2.00.11 - LR)
 
    /* Check if system unstable */
    if (iter > MaxIter && relerr <= Hacc)
@@ -886,9 +884,15 @@ int  writehydwarn(int iter, float relerr)
    for (i=1; i<=Npumps; i++)
    {
       j = Pump[i].Link;
-      if (S[j] == XHEAD || S[j] == XFLOW)
-      {
-         sprintf(Msg,WARN04,Link[j].ID,StatTxt[S[j]],
+      s = S[j];                                                                //(2.00.11 - LR)
+      if (S[j] >= OPEN)                                                        //(2.00.11 - LR)
+      {                                                                        //(2.00.11 - LR)
+          if (Q[j] > K[j]*Pump[i].Qmax) s = XFLOW;                             //(2.00.11 - LR)
+          if (Q[j] < 0.0) s = XHEAD;                                           //(2.00.11 - LR)
+      }                                                                        //(2.00.11 - LR)
+      if (s == XHEAD || s == XFLOW)                                            //(2.00.11 - LR)
+      {                                    
+         sprintf(Msg,WARN04,Link[j].ID,StatTxt[s],                             //(2.00.11 - LR)
                  clocktime(Atime,Htime));
          if (Messageflag) writeline(Msg);
          flag = 4;
@@ -1121,7 +1125,7 @@ void  writelimits(int j1, int j2)
 }                        /* End of writelimits */
    
 
-int  checklimits(float *y, int j1, int j2)
+int  checklimits(double *y, int j1, int j2)
 /*
 **--------------------------------------------------------------
 **   Input:   *y = array of output results                        
@@ -1208,4 +1212,3 @@ int  getnodetype(int i)
 
 
 /********************* END OF REPORT.C ********************/
-

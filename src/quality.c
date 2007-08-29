@@ -7,8 +7,7 @@ VERSION:    2.00
 DATE:       5/29/00
             9/7/00
             10/25/00
-            12/8/04
-            3/10/07
+            8/15/07    (2.00.11)
 AUTHOR:     L. Rossman
             US EPA - NRMRL
                                                                       
@@ -71,14 +70,14 @@ Pseg      FreeSeg;              /* Pointer to unused segment               */
 Pseg      *FirstSeg,            /* First (downstream) segment in each pipe */
           *LastSeg;             /* Last (upstream) segment in each pipe    */
 char      *FlowDir;             /* Flow direction for each pipe            */
-float     *VolIn;               /* Total volume inflow to node             */
-float     *MassIn;              /* Total mass inflow to node               */
-float     Sc;                   /* Schmidt Number                          */
-float     Bucf;                 /* Bulk reaction units conversion factor   */
-float     Tucf;                 /* Tank reaction units conversion factor   */
+double    *VolIn;               /* Total volume inflow to node             */
+double    *MassIn;              /* Total mass inflow to node               */
+double    Sc;                   /* Schmidt Number                          */
+double    Bucf;                 /* Bulk reaction units conversion factor   */
+double    Tucf;                 /* Tank reaction units conversion factor   */
 char      Reactflag;            /* Reaction indicator                      */
 char      OutOfMemory;          /* Out of memory indicator                 */
-static    alloc_handle_t *SegPool; // Memory pool for water quality segments
+static    alloc_handle_t *SegPool; // Memory pool for water quality segments   //(2.00.11 - LR)
 
 
 int  openqual()
@@ -94,14 +93,13 @@ int  openqual()
    int n;
 
    /* Allocate memory pool for WQ segments */
-   /***  modified on 3/10/07  ***/
    OutOfMemory = FALSE;
-   SegPool = AllocInit();
-   if (SegPool == NULL) errcode = 101;
+   SegPool = AllocInit();                                                      //(2.00.11 - LR)
+   if (SegPool == NULL) errcode = 101;                                         //(2.00.11 - LR)
 
    /* Allocate scratch array & reaction rate array*/
-   X  = (float *) calloc(MAX((Nnodes+1),(Nlinks+1)),sizeof(float));
-   R  = (float *) calloc((Nlinks+1), sizeof(float));
+   X  = (double *) calloc(MAX((Nnodes+1),(Nlinks+1)),sizeof(double));
+   R  = (double *) calloc((Nlinks+1), sizeof(double));
    ERRCODE(MEMCHECK(X));
    ERRCODE(MEMCHECK(R));
 
@@ -111,8 +109,8 @@ int  openqual()
    LastSeg  = (Pseg *) calloc(n, sizeof(Pseg));
    FlowDir  = (char *) calloc(n, sizeof(char));
    n        = Nnodes+1;
-   VolIn    = (float *) calloc(n, sizeof(float));
-   MassIn   = (float *) calloc(n, sizeof(float));
+   VolIn    = (double *) calloc(n, sizeof(double));
+   MassIn   = (double *) calloc(n, sizeof(double));
    ERRCODE(MEMCHECK(FirstSeg));
    ERRCODE(MEMCHECK(LastSeg));
    ERRCODE(MEMCHECK(FlowDir));
@@ -121,9 +119,8 @@ int  openqual()
    return(errcode);
 }
 
-
 /* Local function to compute unit conversion factor for bulk reaction rates */
-   float getucf(float order)
+   double getucf(double order)
    {
       if (order < 0.0) order = 0.0;
       if (order == 1.0) return(1.0);
@@ -172,10 +169,9 @@ void  initqual()
       Reactflag = setReactflag();
 
       /* Reset memory pool */
-      /***  modified 3/10/07  ***/
       FreeSeg = NULL;
-      AllocSetPool(SegPool);
-      AllocReset(); 
+      AllocSetPool(SegPool);                                                   //(2.00.11 - LR)
+      AllocReset();                                                            //(2.00.11 - LR)
    }
 
    /* Initialize avg. reaction rates */
@@ -305,12 +301,11 @@ int closequal()
    int errcode = 0;
 
    /* Free memory pool */
-   /***  modified 3/10/07  ***/
-   if ( SegPool )             
-   {
-        AllocSetPool(SegPool);
-        AllocFreePool();
-   }
+   if ( SegPool )                                                              //(2.00.11 - LR)
+   {                                                                           //(2.00.11 - LR)
+        AllocSetPool(SegPool);                                                 //(2.00.11 - LR)
+        AllocFreePool();                                                       //(2.00.11 - LR)
+   }                                                                           //(2.00.11 - LR)
 
    free(FirstSeg);
    free(LastSeg);
@@ -414,7 +409,8 @@ void  transport(long tstep)
    long   qtime, dt;
 
    /* Repeat until elapsed time equals hydraulic time step */
-   AllocSetPool(SegPool);                                                      // added 3/10/07
+
+   AllocSetPool(SegPool);                                                      //(2.00.11 - LR)
    qtime = 0;
    while (!OutOfMemory && qtime < tstep)
    {                                  /* Qstep is quality time step */
@@ -440,7 +436,7 @@ void  initsegs()
 */
 {
    int     j,k;
-   float   c,v;
+   double   c,v;
 
    /* Examine each link */
    for (k=1; k<=Nlinks; k++)
@@ -550,7 +546,7 @@ void  updatesegs(long dt)
 {
    int    k;
    Pseg   seg;
-   float  cseg, rsum, vsum;
+   double  cseg, rsum, vsum;
 
    /* Examine each link in network */
    for (k=1; k<=Nlinks; k++)
@@ -608,7 +604,7 @@ void  removesegs(int k)
 }
 
 
-void  addseg(int k, float v, float c)
+void  addseg(int k, double v, double c)
 /*
 **-------------------------------------------------------------
 **   Input:   k = link segment
@@ -656,13 +652,13 @@ void accumulate(long dt)
 */
 {
    int    i,j,k;
-   float  cseg,v,vseg;
+   double  cseg,v,vseg;
    Pseg   seg;
 
    /* Re-set memory used to accumulate mass & volume */
-   memset(VolIn,0,(Nnodes+1)*sizeof(float));
-   memset(MassIn,0,(Nnodes+1)*sizeof(float));
-   memset(X,0,(Nnodes+1)*sizeof(float));
+   memset(VolIn,0,(Nnodes+1)*sizeof(double));
+   memset(MassIn,0,(Nnodes+1)*sizeof(double));
+   memset(X,0,(Nnodes+1)*sizeof(double));
 
    /* Compute average conc. of segments adjacent to each node */
    /* (For use if there is no transport through the node) */
@@ -685,8 +681,8 @@ void accumulate(long dt)
      if (VolIn[k] > 0.0) X[k] = MassIn[k]/VolIn[k];
 
    /* Move mass from first segment of each pipe into downstream node */
-   memset(VolIn,0,(Nnodes+1)*sizeof(float));
-   memset(MassIn,0,(Nnodes+1)*sizeof(float));
+   memset(VolIn,0,(Nnodes+1)*sizeof(double));
+   memset(MassIn,0,(Nnodes+1)*sizeof(double));
    for (k=1; k<=Nlinks; k++)
    {
       i = UP_NODE(k);               /* Upstream node */
@@ -792,15 +788,15 @@ void sourceinput(long dt)
 */
 {
    int   j,n;
-   float massadded, s, volout;
-   float qout, qcutoff;
+   double massadded = 0.0, s, volout;
+   double qout, qcutoff;
    Psource source;
 
    /* Establish a flow cutoff which indicates no outflow from a node */
    qcutoff = 10.0*TINY;
 
    /* Zero-out the work array X */
-   memset(X,0,(Nnodes+1)*sizeof(float));
+   memset(X,0,(Nnodes+1)*sizeof(double));
    if (Qualflag != CHEM) return;
 
    /* Consider each node */
@@ -815,7 +811,7 @@ void sourceinput(long dt)
       /* Find total flow volume leaving node */
       if (n <= Njuncs) volout = VolIn[n];  /* Junctions */
       else volout = VolIn[n] - D[n]*dt;    /* Tanks */
-      qout = volout / (float) dt;
+      qout = volout / (double) dt;
 
       /* Evaluate source input only if node outflow > cutoff flow */
       if (qout > qcutoff)
@@ -896,7 +892,7 @@ void release(long dt)
 */
 {
    int    k,n;
-   float  c,q,v;
+   double  c,q,v;
    Pseg   seg;
 
    /* Examine each link */
@@ -919,12 +915,10 @@ void release(long dt)
       /* differs from that of the flow released from node.*/
       if ( (seg = LastSeg[k]) != NULL)
       {
-
-         /*** Updated 12/8/04 ***/
          /* Quality of seg close to that of node */
          if (ABS(seg->c - c) < Ctol)
          {
-            seg->c = (seg->c*seg->v + c*v) / (seg->v + v);     
+            seg->c = (seg->c*seg->v + c*v) / (seg->v + v);                     //(2.00.11 - LR)
             seg->v += v;
          }
 
@@ -970,7 +964,7 @@ void  updatesourcenodes(long dt)
       }
 
       /* Normalize mass added at source to time step */
-      source->Smass /= (float)dt;
+      source->Smass /= (double)dt;
    }
 }
 
@@ -1020,7 +1014,7 @@ void  tankmix1(int i, long dt)
 */
 {
     int   n;
-    float cin;
+    double cin;
 
    /* Blend inflow with contents */
    n = Tank[i].Node;
@@ -1052,7 +1046,7 @@ void  tankmix2(int i, long dt)
 {
     int     k,n;
     long    tstep, tstar;
-    float   cin,        /* Inflow quality */
+    double   cin,        /* Inflow quality */
             qin,        /* Inflow rate */
             qout,       /* Outflow rate */
             qnet;       /* Net flow rate */
@@ -1067,7 +1061,7 @@ void  tankmix2(int i, long dt)
    /* Find inflows & outflows */
    n = Tank[i].Node;
    qnet = D[n];
-   qin = VolIn[n]/(float)dt;
+   qin = VolIn[n]/(double)dt;
    qout = qin - qnet;
    if (qin > 0.0) cin = MassIn[n]/VolIn[n];
    else           cin = 0.0;
@@ -1165,8 +1159,8 @@ void  tankmix3(int i, long dt)
 */
 {
    int   k,n;
-   float vin,vnet,vout,vseg;
-   float cin,vsum,csum;
+   double vin,vnet,vout,vseg;
+   double cin,vsum,csum;
    Pseg  seg;
 
    k = Nlinks + i;
@@ -1253,7 +1247,7 @@ void  tankmix4(int i, long dt)
 */
 {
    int   k, n;
-   float vin, vnet, cin, vsum, csum, vseg;
+   double vin, vnet, cin, vsum, csum, vseg;
    Pseg  seg, tmpseg;
 
    k = Nlinks + i;
@@ -1340,7 +1334,7 @@ void  tankmix4(int i, long dt)
 }         
 
 
-float  sourcequal(Psource source)
+double  sourcequal(Psource source)
 /*
 **--------------------------------------------------------------
 **   Input:   j = source index
@@ -1351,7 +1345,7 @@ float  sourcequal(Psource source)
 {
    int   i;
    long  k;
-   float c;
+   double c;
 
    /* Get source concentration (or mass flow) in original units */
    c = source->C0;
@@ -1369,7 +1363,7 @@ float  sourcequal(Psource source)
 }
 
 
-float  avgqual(int k)
+double  avgqual(int k)
 /*
 **--------------------------------------------------------------
 **   Input:   k = link index
@@ -1378,7 +1372,7 @@ float  avgqual(int k)
 **--------------------------------------------------------------
 */
 {
-   float  vsum = 0.0,
+   double  vsum = 0.0,
           msum = 0.0;
    Pseg   seg;
 
@@ -1405,7 +1399,7 @@ void  ratecoeffs()
 */
 {
    int   k;
-   float kw;
+   double kw;
 
    for (k=1; k<=Nlinks; k++)
    {
@@ -1417,7 +1411,7 @@ void  ratecoeffs()
 }                         /* End of ratecoeffs */
 
 
-float piperate(int k)
+double piperate(int k)
 /*
 **--------------------------------------------------------------
 **   Input:   k = link index                                      
@@ -1428,7 +1422,7 @@ float piperate(int k)
 **--------------------------------------------------------------
 */
 {
-   float a,d,u,kf,kw,y,Re,Sh;
+   double a,d,u,kf,kw,y,Re,Sh;
 
    d = Link[k].Diam;                    /* Pipe diameter, ft */
 
@@ -1474,7 +1468,7 @@ float piperate(int k)
 }                         /* End of piperate */
 
 
-float  pipereact(int k, float c, float v, long dt)
+double  pipereact(int k, double c, double v, long dt)
 /*
 **------------------------------------------------------------
 **   Input:   k = link index
@@ -1487,18 +1481,18 @@ float  pipereact(int k, float c, float v, long dt)
 **------------------------------------------------------------
 */
 {
-   float cnew, dc, dcbulk, dcwall, rbulk, rwall;
+   double cnew, dc, dcbulk, dcwall, rbulk, rwall;
 
    /* For water age (hrs), update concentration by timestep */
-   if (Qualflag == AGE) return(c+(float)dt/3600.0);
+   if (Qualflag == AGE) return(c+(double)dt/3600.0);
 
    /* Otherwise find bulk & wall reaction rates */
    rbulk = bulkrate(c,Link[k].Kb,BulkOrder)*Bucf;
    rwall = wallrate(c,Link[k].Diam,Link[k].Kw,Link[k].R);
 
    /* Find change in concentration over timestep */
-   dcbulk = rbulk*(float)dt;
-   dcwall = rwall*(float)dt;
+   dcbulk = rbulk*(double)dt;
+   dcwall = rwall*(double)dt;
 
    /* Update cumulative mass reacted */
    if (Htime >= Rstart)
@@ -1515,7 +1509,7 @@ float  pipereact(int k, float c, float v, long dt)
 }
 
 
-float  tankreact(float c, float v, float kb, long dt)
+double  tankreact(double c, double v, double kb, long dt)
 /*
 **-------------------------------------------------------
 **   Input:   c = current WQ in tank
@@ -1528,20 +1522,20 @@ float  tankreact(float c, float v, float kb, long dt)
 **-------------------------------------------------------
 */
 {
-   float cnew, dc, rbulk;
+   double cnew, dc, rbulk;
 
 /*** Updated 9/7/00 ***/
    /* If no reaction then return current WQ */
    if (!Reactflag) return(c);
 
    /* For water age, update concentration by timestep */
-   if (Qualflag == AGE) return(c + (float)dt/3600.0);
+   if (Qualflag == AGE) return(c + (double)dt/3600.0);
 
    /* Find bulk reaction rate */
    rbulk = bulkrate(c,kb,TankOrder)*Tucf;
 
    /* Find concentration change & update quality */
-   dc = rbulk*(float)dt;
+   dc = rbulk*(double)dt;
    if (Htime >= Rstart) Wtank += ABS(dc)*v;
    cnew = c + dc;
    cnew = MAX(0.0,cnew);
@@ -1549,7 +1543,7 @@ float  tankreact(float c, float v, float kb, long dt)
 }
    
 
-float  bulkrate(float c, float kb, float order)
+double  bulkrate(double c, double kb, double order)
 /*
 **-----------------------------------------------------------
 **   Input:   c = current WQ concentration
@@ -1560,7 +1554,7 @@ float  bulkrate(float c, float kb, float order)
 **-----------------------------------------------------------
 */
 {
-   float c1;
+   double c1;
 
    /* Find bulk reaction potential taking into account */
    /* limiting potential & reaction order. */
@@ -1595,7 +1589,7 @@ float  bulkrate(float c, float kb, float order)
 }
 
 
-float  wallrate(float c, float d, float kw, float kf)
+double  wallrate(double c, double d, double kw, double kf)
 /*
 **------------------------------------------------------------
 **   Input:   c = current WQ concentration

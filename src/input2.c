@@ -7,7 +7,6 @@ VERSION:    2.00
 DATE:       5/30/00
             9/7/00
             10/25/00
-            12/13/06
 AUTHOR:     L. Rossman
             US EPA - NRMRL
 
@@ -150,7 +149,7 @@ int  readdata()
          inperr,errsum;       /* Error code & total error count  */
 
 /* Allocate input buffer */
-   X = (float *) calloc(MAXTOKS, sizeof(float));
+   X = (double *) calloc(MAXTOKS, sizeof(double));
    ERRCODE(MEMCHECK(X));
 
    if (!errcode)
@@ -311,8 +310,9 @@ int  getpumpparams(void)
 **--------------------------------------------------------------
 */
 {
-   int   i,j,k,m,n;
-   float a,b,c,h0,h1,h2,q1,q2;
+   int   i, j = 0, k, m, n = 0;
+   double a,b,c,
+	      h0 = 0.0, h1 = 0.0, h2 = 0.0, q1 = 0.0, q2 = 0.0;
 
    for (i=1; i<=Npumps; i++)
    {
@@ -600,7 +600,6 @@ int     getpatterns(void)
       i = pat->i;
 
    /* Check if this is the default pattern */
-      if (strcmp(pat->ID, AdjustPatID) == 0) AdjustPat = i;                    /*** Added 12/13/06 ***/
       if (strcmp(pat->ID, DefPatID) == 0) DefPat = i;
       if (i >= 0 && i <= MaxPats)
       {
@@ -609,7 +608,7 @@ int     getpatterns(void)
 
       /* Give pattern a length of at least 1 */
          if (Pattern[i].Length == 0) Pattern[i].Length = 1;
-         Pattern[i].F = (float *) calloc(Pattern[i].Length, sizeof(float));
+         Pattern[i].F = (double *) calloc(Pattern[i].Length, sizeof(double));
          if (Pattern[i].F == NULL) return(101);
 
       /* Start at head of pattern multiplier list */
@@ -644,7 +643,7 @@ int     getcurves(void)
 */
 {
    int i,j;
-   float x;
+   double x;
    SFloatlist *fx, *fy;
    STmplist *c;
 
@@ -670,8 +669,8 @@ int     getcurves(void)
          }
 
       /* Allocate memory for curve data */
-         Curve[i].X = (float *) calloc(Curve[i].Npts, sizeof(float));
-         Curve[i].Y = (float *) calloc(Curve[i].Npts, sizeof(float));
+         Curve[i].X = (double *) calloc(Curve[i].Npts, sizeof(double));
+         Curve[i].Y = (double *) calloc(Curve[i].Npts, sizeof(double));
          if (Curve[i].X == NULL || Curve[i].Y == NULL) return(101);
 
       /* Traverse list of x,y data */
@@ -809,7 +808,7 @@ int  gettokens(char *s)
 }                        /* End of gettokens */
 
 
-float  hour(char *time, char *units)
+double  hour(char *time, char *units)
 /*
 **---------------------------------------------------------
 **  Input:   *time  = string containing a time value
@@ -821,7 +820,7 @@ float  hour(char *time, char *units)
 */
 {
    int    n;
-   float  y[3];
+   double  y[3];
    char   *s;
 
 /* Separate clock time into hrs, min, sec. */
@@ -868,7 +867,7 @@ float  hour(char *time, char *units)
 }                        /* end of hour */
 
 
-int  getfloat(char *s, float *y)
+int  getfloat(char *s, double *y)
 /*
 **-----------------------------------------------------------
 **  Input:   *s = character string
@@ -879,7 +878,7 @@ int  getfloat(char *s, float *y)
 */
 {
     char *endptr;
-    *y = (float) strtod(s,&endptr);
+    *y = (double) strtod(s,&endptr);
     if (*endptr > 0) return(0);
     return(1);
 }

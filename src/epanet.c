@@ -10,7 +10,7 @@ DATE:       5/30/00
             3/1/01
             11/19/01
             6/24/02
-            3/10/07
+            8/15/07    (2.00.11)
 AUTHOR:     L. Rossman
             US EPA - NRMRL
 
@@ -106,18 +106,19 @@ execute function x and set the error code equal to its return value.
 *******************************************************************************
 */
 
-/*** Updated 3/10/07 ***/
-//#define CLE     /* Un-comment this line to compile as a command line executable */
-//#define SOL     /* Un-comment this line to compile as a shared object library */
-//#define DLL     /* Un-comment this line to compile as a Windows DLL */
+/*** New compile directives ***/                                               //(2.00.11 - LR)
+//#define CLE     /* Compile as a command line executable */
+//#define SOL     /* Compile as a shared object library */
+//#define DLL     /* Compile as a Windows DLL */
 
-#ifdef DLL
-#include <windows.h>
+/*** Following lines are deprecated ***/                                       //(2.00.11 - LR)
+//#ifdef DLL
+//#include <windows.h>
 
 /*** Updated 9/7/00 ***/
 #include <float.h>
 
-#endif
+//#endif
 
 
 #include <stdio.h>
@@ -132,8 +133,11 @@ execute function x and set the error code equal to its return value.
 #include "funcs.h"
 #define  EXTERN
 #include "vars.h"
+#ifdef CLE
+#include "epanet2.h"
+#else
 #include "toolkit.h"
-
+#endif
 
 void (* viewprog) (char *);     /* Pointer to progress viewing function */
 
@@ -144,14 +148,15 @@ void (* viewprog) (char *);     /* Pointer to progress viewing function */
 ----------------------------------------------------------------
 */
 
+/*** This code is no longer required *****                                     //(2.00.11 - LR)
 #ifdef DLL
-#pragma argsused
 int WINAPI DllEntryPoint(HINSTANCE hinst, unsigned long reason, void* reserved)
 {
         viewprog = NULL;
         return 1;
 }
 #endif
+*****************************************/
 
 
 /*
@@ -160,7 +165,8 @@ int WINAPI DllEntryPoint(HINSTANCE hinst, unsigned long reason, void* reserved)
 ----------------------------------------------------------------
 */
 
-#ifdef CLE                                                                     // Updated 3/10/07
+#ifdef CLE                                                                     //(2.00.11 - LR)
+
 int   main(int argc, char *argv[])
 /*--------------------------------------------------------------
 **  Input:   argc    = number of command line arguments
@@ -200,6 +206,7 @@ int   main(int argc, char *argv[])
 }                                       /* End of main */
 #endif
 
+#ifndef CLE   // Beginning of Toolkit API
 
 /*
 ----------------------------------------------------------------
@@ -965,35 +972,39 @@ int DLLEXPORT ENgetcontrol(int cindex, int *ctype, int *lindex,
 **----------------------------------------------------------------
 */
 {
+   double s, lvl;
+
+   s = 0.0;
+   lvl = 0.0;
    *ctype = 0;
    *lindex = 0;
-   *setting = 0.0;
    *nindex = 0;
-   *level = 0.0;
    if (!Openflag) return(102);
    if (cindex < 1 || cindex > Ncontrols) return(241);
    *ctype = Control[cindex].Type;
    *lindex = Control[cindex].Link;
-   *setting = Control[cindex].Setting;
+   s = Control[cindex].Setting;
    if (Control[cindex].Setting != MISSING) switch (Link[*lindex].Type)
    {
       case PRV:
       case PSV:
-      case PBV: *setting *= Ucf[PRESSURE]; break;
-      case FCV: *setting *= Ucf[FLOW];
+      case PBV: s *= Ucf[PRESSURE]; break;
+      case FCV: s *= Ucf[FLOW];
    }
-   else if (Control[cindex].Status == OPEN) *setting = 1.0;
+   else if (Control[cindex].Status == OPEN) s = 1.0;
 
 /*** Updated 3/1/01 ***/
-   else *setting = 0.0;
+   else s = 0.0;
 
    *nindex = Control[cindex].Node;
    if (*nindex > Njuncs)
-      *level = (Control[cindex].Grade - Node[*nindex].El)*Ucf[ELEV];
+      lvl = (Control[cindex].Grade - Node[*nindex].El)*Ucf[ELEV];
    else if (*nindex > 0)
-      *level = (Control[cindex].Grade - Node[*nindex].El)*Ucf[PRESSURE];
+      lvl = (Control[cindex].Grade - Node[*nindex].El)*Ucf[PRESSURE];
    else
-      *level = (float)Control[cindex].Time;
+      lvl = (float)Control[cindex].Time;
+   *setting = (float)s;
+   *level = (float)lvl;
    return(0);
 }
 
@@ -1033,22 +1044,24 @@ int  DLLEXPORT ENgetoption(int code, float *value)
 **----------------------------------------------------------------
 */
 {
+   double v = 0.0;
+   *value = 0.0f;
    if (!Openflag) return(102);
-   *value = 0.0;
    switch (code)
    {
-      case EN_TRIALS:     *value = (float)MaxIter;
+      case EN_TRIALS:     v = (double)MaxIter;
                           break;
-      case EN_ACCURACY:   *value = Hacc;
+      case EN_ACCURACY:   v = Hacc;
                           break;
-      case EN_TOLERANCE:  *value = Ctol*Ucf[QUALITY];
+      case EN_TOLERANCE:  v = Ctol*Ucf[QUALITY];
                           break;
-      case EN_EMITEXPON:  if (Qexp > 0.0) *value = 1.0/Qexp;
+      case EN_EMITEXPON:  if (Qexp > 0.0) v = 1.0/Qexp;
                           break;
-      case EN_DEMANDMULT: *value = Dmult;
+      case EN_DEMANDMULT: v = Dmult;
                           break;
       default:            return(251);
    }
+   *value = (float)v;
    return(0);
 }
 
@@ -1168,11 +1181,11 @@ int DLLEXPORT ENgetpatternvalue(int index, int period, float *value)
 **           and pattern
 **----------------------------------------------------------------
 */
-{
+{  *value = 0.0f;
    if (!Openflag) return(102);
    if (index < 1 || index > Npats) return(205);
    if (period < 1 || period > Pattern[index].Length) return(251);
-   *value = Pattern[index].F[period-1];
+   *value = (float)Pattern[index].F[period-1];
    return(0);
 }
 
@@ -1296,11 +1309,12 @@ int DLLEXPORT ENgetnodevalue(int index, int code, float *value)
 **----------------------------------------------------------------
 */
 {
+   double v = 0.0;
    Pdemand demand;
    Psource source;
 
 /* Check for valid arguments */
-   *value = 0.0;
+   *value = 0.0f;
    if (!Openflag) return(102);
    if (index <= 0 || index > Nnodes) return(203);
 
@@ -1308,93 +1322,94 @@ int DLLEXPORT ENgetnodevalue(int index, int code, float *value)
    switch (code)
    {
       case EN_ELEVATION:
-         *value = Node[index].El*Ucf[ELEV];
+         v = Node[index].El*Ucf[ELEV];
          break;
 
       case EN_BASEDEMAND:
-         *value = 0.0;
+         v = 0.0;
          /* NOTE: primary demand category is last on demand list */
          if (index <= Njuncs)
            for (demand = Node[index].D; demand != NULL; demand = demand->next)
-              *value = (demand->Base);
-         *value *= Ucf[FLOW];
+              v = (demand->Base);
+         v *= Ucf[FLOW];
          break;
 
       case EN_PATTERN:
-         *value = 0.0;
+         v = 0.0;
          /* NOTE: primary demand category is last on demand list */
          if (index <= Njuncs)
          {
            for (demand = Node[index].D; demand != NULL; demand = demand->next)
-              *value = (float)(demand->Pat);
+              v = (double)(demand->Pat);
          }
-         else *value = (float)(Tank[index-Njuncs].Pat);
+         else v = (double)(Tank[index-Njuncs].Pat);
          break;
 
       case EN_EMITTER:
-         *value = 0.0;
+         v = 0.0;
          if (Node[index].Ke > 0.0)
-            *value = Ucf[FLOW]/pow((Ucf[PRESSURE]*Node[index].Ke),(1.0/Qexp));
+            v = Ucf[FLOW]/pow((Ucf[PRESSURE]*Node[index].Ke),(1.0/Qexp));
          break;
 
       case EN_INITQUAL:
-         *value = Node[index].C0*Ucf[QUALITY];
+         v = Node[index].C0*Ucf[QUALITY];
          break;
 
-/*** Updated 3/10/07 ***/
+/*** Additional parameters added for retrieval ***/                            //(2.00.11 - LR)
       case EN_SOURCEQUAL:
       case EN_SOURCETYPE:
       case EN_SOURCEMASS:
       case EN_SOURCEPAT:
          source = Node[index].S;
          if (source == NULL) return(240);
-         if (code == EN_SOURCEQUAL)      *value = source->C0;
-         else if (code == EN_SOURCEMASS) *value = source->Smass*60.0;
-         else if (code == EN_SOURCEPAT)  *value = source->Pat;
-         else                            *value = source->Type;
+         if (code == EN_SOURCEQUAL)      v = source->C0;
+         else if (code == EN_SOURCEMASS) v = source->Smass*60.0;
+         else if (code == EN_SOURCEPAT)  v = source->Pat;
+         else                            v = source->Type;
          return(0);
 
       case EN_TANKLEVEL:
          if (index <= Njuncs) return(251);
-         *value = (Tank[index-Njuncs].H0 - Node[index].El)*Ucf[ELEV];
+         v = (Tank[index-Njuncs].H0 - Node[index].El)*Ucf[ELEV];
          break;
 
-/*** Added 3/10/07 ***/
-      case EN_INITVOLUME:
-         *value = 0.0;
-         if ( index > Njuncs ) *value = Tank[index-Njuncs].V0*Ucf[VOLUME];
-         break;
+/*** New parameter added for retrieval ***/                                    //(2.00.11 - LR)
+      case EN_INITVOLUME:                                                      //(2.00.11 - LR)
+         v = 0.0;                                                              //(2.00.11 - LR)
+         if ( index > Njuncs ) v = Tank[index-Njuncs].V0*Ucf[VOLUME];          //(2.00.11 - LR)
+         break;                                                                //(2.00.11 - LR)
 
-/*** Added 3/10/07 ***/
-      case EN_MIXMODEL:
-         *value = MIX1;
-         if ( index > Njuncs ) *value = Tank[index-Njuncs].MixModel;
-         break;
+/*** New parameter added for retrieval ***/                                    //(2.00.11 - LR)
+      case EN_MIXMODEL:                                                        //(2.00.11 - LR)
+         v = MIX1;                                                             //(2.00.11 - LR)
+         if ( index > Njuncs ) v = Tank[index-Njuncs].MixModel;                //(2.00.11 - LR)
+         break;                                                                //(2.00.11 - LR)
 
-/*** Added 3/10/07 ***/
-      case EN_MIXZONEVOL:
-         *value = 0.0;
-         if ( index > Njuncs ) *value = Tank[index-Njuncs].V1max*Ucf[VOLUME];
-         break;
+/*** New parameter added for retrieval ***/                                    //(2.00.11 - LR)
+      case EN_MIXZONEVOL:                                                      //(2.00.11 - LR)
+         v = 0.0;                                                              //(2.00.11 - LR)
+         if ( index > Njuncs ) v = Tank[index-Njuncs].V1max*Ucf[VOLUME];       //(2.00.11 - LR)
+         break;                                                                //(2.00.11 - LR)
 
       case EN_DEMAND:
-         *value = D[index]*Ucf[FLOW];
+         v = D[index]*Ucf[FLOW];
          break;
 
       case EN_HEAD:
-         *value = H[index]*Ucf[HEAD];
+         v = H[index]*Ucf[HEAD];
          break;
 
       case EN_PRESSURE:
-         *value = (H[index] - Node[index].El)*Ucf[PRESSURE];
+         v = (H[index] - Node[index].El)*Ucf[PRESSURE];
          break;
 
       case EN_QUALITY:
-         *value = C[index]*Ucf[QUALITY];
+         v = C[index]*Ucf[QUALITY];
          break;
 
       default: return(251);
    }
+   *value = (float)v;
    return(0);
 }
 
@@ -1489,10 +1504,10 @@ int DLLEXPORT ENgetlinkvalue(int index, int code, float *value)
 **------------------------------------------------------------------
 */
 {
-   float a,h,q;
+   double a,h,q, v = 0.0;
 
 /* Check for valid arguments */
-   *value = 0.0;
+   *value = 0.0f;
    if (!Openflag) return(102);
    if (index <= 0 || index > Nlinks) return(204);
 
@@ -1500,119 +1515,120 @@ int DLLEXPORT ENgetlinkvalue(int index, int code, float *value)
    switch (code)
    {
       case EN_DIAMETER:
-         if (Link[index].Type == PUMP) *value = 0.0;
-         else *value = Link[index].Diam*Ucf[DIAM];
+         if (Link[index].Type == PUMP) v = 0.0;
+         else v = Link[index].Diam*Ucf[DIAM];
          break;
 
       case EN_LENGTH:
-         *value = Link[index].Len*Ucf[ELEV];
+         v = Link[index].Len*Ucf[ELEV];
          break;
 
       case EN_ROUGHNESS:
          if (Link[index].Type <= PIPE)
          {
             if (Formflag == DW)
-               *value = Link[index].Kc*(1000.0*Ucf[ELEV]);
-            else *value = Link[index].Kc;
+               v = Link[index].Kc*(1000.0*Ucf[ELEV]);
+            else v = Link[index].Kc;
          }
-         else *value = 0.0;
+         else v = 0.0;
          break;
 
       case EN_MINORLOSS:
          if (Link[index].Type != PUMP)
          {
-            *value = Link[index].Km;
-            *value *= (SQR(Link[index].Diam)*SQR(Link[index].Diam)/0.02517);
+            v = Link[index].Km;
+            v *= (SQR(Link[index].Diam)*SQR(Link[index].Diam)/0.02517);
          }
-         else *value = 0.0;
+         else v = 0.0;
          break;
 
       case EN_INITSTATUS:
-         if (Link[index].Stat <= CLOSED) *value = 0;
-         else *value = 1;
+         if (Link[index].Stat <= CLOSED) v = 0.0;
+         else v = 1.0;
          break;
 
       case EN_INITSETTING:
          if (Link[index].Type == PIPE || Link[index].Type == CV)
             return(ENgetlinkvalue(index, EN_ROUGHNESS, value));
-         *value = Link[index].Kc;
+         v = Link[index].Kc;
          switch (Link[index].Type)
          {
             case PRV:
             case PSV:
-            case PBV: *value *= Ucf[PRESSURE]; break;
-            case FCV: *value *= Ucf[FLOW];
+            case PBV: v *= Ucf[PRESSURE]; break;
+            case FCV: v *= Ucf[FLOW];
          }
          break;
 
       case EN_KBULK:
-         *value = Link[index].Kb*SECperDAY;
+         v = Link[index].Kb*SECperDAY;
          break;
 
       case EN_KWALL:
-         *value = Link[index].Kw*SECperDAY;
+         v = Link[index].Kw*SECperDAY;
          break;
 
       case EN_FLOW:
 
 /*** Updated 10/25/00 ***/
-         if (S[index] <= CLOSED) *value = 0.0;
+         if (S[index] <= CLOSED) v = 0.0;
 
-         else *value = Q[index]*Ucf[FLOW];
+         else v = Q[index]*Ucf[FLOW];
          break;
 
       case EN_VELOCITY:
-         if (Link[index].Type == PUMP) *value = 0.0;
+         if (Link[index].Type == PUMP) v = 0.0;
 
 /*** Updated 11/19/01 ***/
-         else if (S[index] <= CLOSED) *value = 0.0;
+         else if (S[index] <= CLOSED) v = 0.0;
 
          else
          {
             q = ABS(Q[index]);
             a = PI*SQR(Link[index].Diam)/4.0;
-            *value = q/a*Ucf[VELOCITY];
+            v = q/a*Ucf[VELOCITY];
          }
          break;
 
       case EN_HEADLOSS:
 
 /*** Updated 11/19/01 ***/
-         if (S[index] <= CLOSED) *value = 0.0;
+         if (S[index] <= CLOSED) v = 0.0;
 
          else
          {
             h = H[Link[index].N1] - H[Link[index].N2];
             if (Link[index].Type != PUMP) h = ABS(h);
-            *value = h*Ucf[HEADLOSS];
+            v = h*Ucf[HEADLOSS];
          }
          break;
 
       case EN_STATUS:
-         if (S[index] <= CLOSED) *value = 0;
-         else *value = 1;
+         if (S[index] <= CLOSED) v = 0.0;
+         else v = 1.0;
          break;
 
       case EN_SETTING:
          if (Link[index].Type == PIPE || Link[index].Type == CV)
             return(ENgetlinkvalue(index, EN_ROUGHNESS, value));
-         if (K[index] == MISSING) *value = 0.0;
-         else                     *value = K[index];
+         if (K[index] == MISSING) v = 0.0;
+         else                     v = K[index];
          switch (Link[index].Type)
          {
             case PRV:
             case PSV:
-            case PBV: *value *= Ucf[PRESSURE]; break;
-            case FCV: *value *= Ucf[FLOW];
+            case PBV: v *= Ucf[PRESSURE]; break;
+            case FCV: v *= Ucf[FLOW];
          }
          break;
 
       case EN_ENERGY:
-         getenergy(index, value, &a);
+         getenergy(index, &v, &a);
          break;
 
       default: return(251);
    }
+   *value = (float)v;
    return(0);
 }
 
@@ -1642,8 +1658,9 @@ int DLLEXPORT ENsetcontrol(int cindex, int ctype, int lindex,
 **----------------------------------------------------------------
 */
 {
-   char  status = ACTIVE;
-   long  t = 0;
+   char   status = ACTIVE;
+   long   t = 0;
+   double s = setting, lvl = level;
 
 /* Check that input file opened */
    if (!Openflag) return(102);
@@ -1669,50 +1686,50 @@ int DLLEXPORT ENsetcontrol(int cindex, int ctype, int lindex,
       if (nindex < 1 || nindex > Nnodes) return(203);
    }
    else nindex = 0;
-   if (setting < 0.0 || level < 0.0) return(202);
+   if (s < 0.0 || lvl < 0.0) return(202);
 
 /* Adjust units of control parameters */
    switch (Link[lindex].Type)
    {
       case PRV:
       case PSV:
-      case PBV:  setting /= Ucf[PRESSURE];
+      case PBV:  s /= Ucf[PRESSURE];
                  break;
-      case FCV:  setting /= Ucf[FLOW];
+      case FCV:  s /= Ucf[FLOW];
                  break;
 
 /*** Updated 9/7/00 ***/
-      case GPV:  if (setting == 0.0) status = CLOSED;
-                 else if (setting == 1.0) status = OPEN;
+      case GPV:  if (s == 0.0) status = CLOSED;
+                 else if (s == 1.0) status = OPEN;
                  else return(202);
-                 setting = Link[lindex].Kc;
+                 s = Link[lindex].Kc;
                  break;
 
       case PIPE:
       case PUMP: status = OPEN;
-                 if (setting == 0.0) status = CLOSED;
+                 if (s == 0.0) status = CLOSED;
    }
    if (ctype == LOWLEVEL || ctype == HILEVEL)
    {
-      if (nindex > Njuncs) level = Node[nindex].El + level/Ucf[ELEV];
-      else level = Node[nindex].El + level/Ucf[PRESSURE];
+      if (nindex > Njuncs) lvl = Node[nindex].El + level/Ucf[ELEV];
+      else lvl = Node[nindex].El + level/Ucf[PRESSURE];
    }
-   if (ctype == TIMER)     t = (long)ROUND(level);
-   if (ctype == TIMEOFDAY) t = (long)ROUND(level) % SECperDAY;
+   if (ctype == TIMER)     t = (long)ROUND(lvl);
+   if (ctype == TIMEOFDAY) t = (long)ROUND(lvl) % SECperDAY;
 
 /* Reset control's parameters */
    Control[cindex].Type = (char)ctype;
    Control[cindex].Link = lindex;
    Control[cindex].Node = nindex;
    Control[cindex].Status = status;
-   Control[cindex].Setting = setting;
-   Control[cindex].Grade = level;
+   Control[cindex].Setting = s;
+   Control[cindex].Grade = lvl;
    Control[cindex].Time = t;
    return(0);
 }
 
 
-int DLLEXPORT ENsetnodevalue(int index, int code, float value)
+int DLLEXPORT ENsetnodevalue(int index, int code, float v)
 /*----------------------------------------------------------------
 **  Input:   index = node index
 **           code  = node parameter code (see TOOLKIT.H)
@@ -1726,6 +1743,7 @@ int DLLEXPORT ENsetnodevalue(int index, int code, float value)
    int  j;
    Pdemand demand;
    Psource source;
+   double value = v;
 
    if (!Openflag) return(102);
    if (index <= 0 || index > Nnodes) return(203);
@@ -1841,11 +1859,11 @@ int DLLEXPORT ENsetnodevalue(int index, int code, float value)
 }
 
 
-int DLLEXPORT ENsetlinkvalue(int index, int code, float value)
+int DLLEXPORT ENsetlinkvalue(int index, int code, float v)
 /*----------------------------------------------------------------
 **  Input:   index = link index
 **           code  = link parameter code (see TOOLKIT.H)
-**           value = parameter value
+**           v = parameter value
 **  Output:  none
 **  Returns: error code
 **  Purpose: sets input parameter value for a link
@@ -1853,7 +1871,7 @@ int DLLEXPORT ENsetlinkvalue(int index, int code, float value)
 */
 {
    char  s;
-   float r;
+   double r, value = v;
 
    if (!Openflag) return(102);
    if (index <= 0 || index > Nlinks) return(204);
@@ -1914,7 +1932,7 @@ int DLLEXPORT ENsetlinkvalue(int index, int code, float value)
       case EN_SETTING:
          if (value < 0.0) return(202);
          if (Link[index].Type == PIPE || Link[index].Type == CV)
-           return(ENsetlinkvalue(index, EN_ROUGHNESS, value));
+           return(ENsetlinkvalue(index, EN_ROUGHNESS, v));
          else
          {
             switch (Link[index].Type)
@@ -1972,7 +1990,7 @@ int  DLLEXPORT  ENsetpattern(int index, float *f, int n)
 
 /* Re-set number of time periods & reallocate memory for multipliers */
    Pattern[index].Length = n;
-   Pattern[index].F = (float *) realloc(Pattern[index].F, n*sizeof(float));
+   Pattern[index].F = (double *) realloc(Pattern[index].F, n*sizeof(double));
    if (Pattern[index].F == NULL) return(101);
 
 /* Load multipliers into pattern */
@@ -2054,10 +2072,10 @@ int  DLLEXPORT  ENsettimeparam(int code, long value)
 }
 
 
-int  DLLEXPORT ENsetoption(int code, float value)
+int  DLLEXPORT ENsetoption(int code, float v)
 /*----------------------------------------------------------------
 **  Input:   code  = option code (see TOOLKIT.H)
-**           value = option value
+**           v = option value
 **  Output:  none
 **  Returns: error code
 **  Purpose: sets value for an analysis option
@@ -2065,7 +2083,7 @@ int  DLLEXPORT ENsetoption(int code, float value)
 */
 {
    int   i,j;
-   float Ke,n,ucf;
+   double Ke,n,ucf, value = v;
    if (!Openflag) return(102);
    switch (code)
    {
@@ -2083,7 +2101,8 @@ int  DLLEXPORT ENsetoption(int code, float value)
                           ucf = pow(Ucf[FLOW],n)/Ucf[PRESSURE];
                           for (i=1; i<=Njuncs; i++)
                           {
-                             j = ENgetnodevalue(i,EN_EMITTER,&Ke);
+                             j = ENgetnodevalue(i,EN_EMITTER,&v);
+							 Ke = v;
                              if (j == 0 && Ke > 0.0) Node[i].Ke = ucf/pow(Ke,n);
                           }
                           Qexp = n;
@@ -2131,7 +2150,7 @@ int  DLLEXPORT ENsetqualtype(int qualcode, char *chemname,
 */
 {
 /*** Updated 3/1/01 ***/
-   float ccf = 1.0;
+   double ccf = 1.0;
 
    if (!Openflag) return(102);
    if (qualcode < EN_NONE || qualcode > EN_TRACE) return(251);
@@ -2175,36 +2194,6 @@ int  DLLEXPORT ENsetqualtype(int qualcode, char *chemname,
    return(0);
 }
 
-int  DLLEXPORT  ENaddpattern(char *id)
-/*----------------------------------------------------------------
-**  Input:   id     = new time pattern ID
-**  Output:  none
-**  Returns: error code
-**  Purpose: Creates new time pattern with PatternID *id.
-**           New patterns are indexed sequentially with length
-**           1 and initial value 1.
-**----------------------------------------------------------------
-*/
-{
-   int i;
-   if (!Openflag) return(102);
-   for (i=1; i<=Npats; i++)  /* Check that PatternID is unused */
-   {
-      if (strcmp(id, Pattern[i].ID) == 0)
-      {
-         return(252);
-      }
-   }
-   Npats++;
-   Pattern = (Spattern *) realloc(Pattern, (Npats+1)*sizeof(Spattern));
-   if (Pattern == NULL) return(101);
-   Pattern[Npats].F = (float *) calloc(1, sizeof(float));
-   if (Pattern[Npats].F == NULL) return(101);
-   strcpy(Pattern[Npats].ID,id);
-   Pattern[Npats].Length = 1;
-   Pattern[Npats].F[0] = 1.0;
-   return(0);
-}
 
 /*
 ----------------------------------------------------------------
@@ -2468,10 +2457,10 @@ int  allocdata()
    if (!errcode)
    {
       n = MaxNodes + 1;
-      Node = (Snode *) calloc(n, sizeof(Snode));
-      D    = (float *) calloc(n, sizeof(float));
-      C    = (float *) calloc(n, sizeof(float));
-      H    = (REAL *)  calloc(n, sizeof(REAL));
+      Node = (Snode *)  calloc(n, sizeof(Snode));
+      D    = (double *) calloc(n, sizeof(double));
+      C    = (double *) calloc(n, sizeof(double));
+      H    = (double *) calloc(n, sizeof(double));
       ERRCODE(MEMCHECK(Node));
       ERRCODE(MEMCHECK(D));
       ERRCODE(MEMCHECK(C));
@@ -2483,8 +2472,8 @@ int  allocdata()
    {
       n = MaxLinks + 1;
       Link = (Slink *) calloc(n, sizeof(Slink));
-      Q    = (float *) calloc(n, sizeof(float));
-      K    = (float *) calloc(n, sizeof(float));
+      Q    = (double *) calloc(n, sizeof(double));
+      K    = (double *) calloc(n, sizeof(double));
       S    = (char  *) calloc(n, sizeof(char));
       ERRCODE(MEMCHECK(Link));
       ERRCODE(MEMCHECK(Q));
@@ -2671,7 +2660,7 @@ int  strcomp(char *s1, char *s2)
 }                                       /*  End of strcomp  */
 
 
-float  interp(int n, float x[], float y[], float xx)
+double  interp(int n, double x[], double y[], double xx)
 /*----------------------------------------------------------------
 **  Input:   n  = number of data pairs defining a curve
 **           x  = x-data values of curve
@@ -2686,7 +2675,7 @@ float  interp(int n, float x[], float y[], float xx)
 */
 {
     int    k,m;
-    float  dx,dy;
+    double  dx,dy;
 
     m = n - 1;                          /* Highest data index      */
     if (xx <= x[0]) return(y[0]);       /* xx off low end of curve */
@@ -2777,7 +2766,6 @@ char *geterrmsg(int errcode)
       case 241:  sprintf(Msg,ERR241,t_FUNCCALL,""); break;
       case 250:  sprintf(Msg,ERR250);  break;
       case 251:  sprintf(Msg,ERR251);  break;
-      case 252:  sprintf(Msg,ERR252);  break;
 
                                        /* File Errors */
       case 301:  strcpy(Msg,ERR301);   break;
@@ -2814,6 +2802,8 @@ void  errmsg(int errcode)
    }
 }
 
+#endif  // End of Toolkit API
+
 
 void  writecon(char *s)
 /*----------------------------------------------------------------
@@ -2823,7 +2813,7 @@ void  writecon(char *s)
 **----------------------------------------------------------------
 */
 {
-#ifdef CLE                                                                     // Updated 3/10/07
+#ifdef CLE                                                                     //(2.00.11 - LR)
    fprintf(stdout,s);
    fflush(stdout);
 #endif
@@ -2839,8 +2829,8 @@ void writewin(char *s)
 **----------------------------------------------------------------
 */
 {
-   char progmsg[MAXMSG+1];
 #ifdef DLL
+   char progmsg[MAXMSG+1];
    if (viewprog != NULL)
    {
       strncpy(progmsg,s,MAXMSG);

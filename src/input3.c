@@ -9,8 +9,7 @@ DATE:       5/30/00
             10/25/00
             3/1/01
             6/24/02
-            12/13/06
-            1/24/07
+            8/15/07    (2.00.11)
 AUTHOR:     L. Rossman
             US EPA - NRMRL
 
@@ -56,7 +55,7 @@ int  juncdata()
 */
 {
    int      n, p = 0;
-   float    el,y = 0.0;
+   double    el,y = 0.0;
    Pdemand  demand;
    STmplist *pat;
 
@@ -122,7 +121,7 @@ int  tankdata()
          n,               /* # data items */
          p = 0,           /* Fixed grade time pattern index */
          vcurve = 0;      /* Volume curve index */
-   float el        = 0.0, /* Elevation */
+   double el        = 0.0, /* Elevation */
          initlevel = 0.0, /* Initial level */
          minlevel  = 0.0, /* Minimum level */
          maxlevel  = 0.0, /* Maximum level */
@@ -222,7 +221,7 @@ int  pipedata()
          n;                      /* # data items      */
    char  type = PIPE,            /* Link type         */
          status = OPEN;          /* Link status       */
-   float length,                 /* Link length       */
+   double length,                 /* Link length       */
          diam,                   /* Link diameter     */
          rcoeff,                 /* Roughness coeff.  */
          lcoeff = 0.0;           /* Minor loss coeff. */
@@ -311,7 +310,7 @@ int  pumpdata()
          j1,                    /* Start-node index */
          j2,                    /* End-node index   */
          m, n;                  /* # data items     */
-   float y;
+   double y;
    STmplist *t;                 /* Pattern record   */
 
 /* Add new pump to data base */
@@ -419,7 +418,7 @@ int  valvedata()
          n;                     /* # data items       */
    char  status = ACTIVE,       /* Valve status       */
          type;                  /* Valve type         */
-   float diam = 0.0,            /* Valve diameter     */
+   double diam = 0.0,            /* Valve diameter     */
          setting,               /* Valve setting      */
          lcoeff = 0.0;          /* Minor loss coeff.  */
    STmplist *t;                 /* Curve record       */
@@ -503,7 +502,7 @@ int  patterndata()
 */
 {
    int  i,n;
-   float x;
+   double x;
    SFloatlist *f;
    STmplist   *p;
    n = Ntokens - 1;
@@ -541,7 +540,7 @@ int  curvedata()
 **------------------------------------------------------
 */
 {
-   float      x,y;
+   double      x,y;
    SFloatlist *fx, *fy;
    STmplist   *c;
 
@@ -593,7 +592,7 @@ int  demanddata()
 */
 {
    int  j,n,p = 0;
-   float y;
+   double y;
    Pdemand demand;
    STmplist *pat;
 
@@ -667,7 +666,7 @@ int  controldata()
          n;                    /* # data items           */
    char  status = ACTIVE,      /* Link status            */
          type;                 /* Link or control type   */
-   float setting = MISSING,    /* Link setting           */
+   double setting = MISSING,    /* Link setting           */
          time = 0.0,           /* Simulation time        */
          level = 0.0;          /* Pressure or tank level */
 
@@ -763,7 +762,7 @@ int  sourcedata()
 **  Purpose: processes water quality source data                   
 **  Formats:                                                     
 **     [SOURCE]                                                
-**        node  sourcetype  quality  (pattern)               
+**        node  sourcetype  quality  (pattern start stop)
 **                                                              
 **  NOTE: units of mass-based source are mass/min                
 **--------------------------------------------------------------
@@ -774,7 +773,7 @@ int  sourcedata()
          n,                  /* # data items  */
          p = 0;              /* Time pattern  */
    char  type = CONCEN;      /* Source type   */
-   float c0 = 0;             /* Init. quality */
+   double c0 = 0;             /* Init. quality */
    STmplist *pat;
    Psource  source;
 
@@ -790,12 +789,14 @@ int  sourcedata()
    else if (match(Tok[1],w_FLOWPACED)) type = FLOWPACED;
    else i = 1;
    if (!getfloat(Tok[i],&c0)) return(202);      /* Illegal WQ value */
-   if (n > i+1)
+
+   if (n > i+1 && strlen(Tok[i+1]) > 0 && strcmp(Tok[i+1], "*") != 0 )         //(2.00.11 - LR)
    {
        pat = findID(Tok[i+1],Patlist);
        if (pat == NULL) return(205);            /* Illegal pattern. */
        p = pat->i;
    }
+
    source = (struct Ssource *) malloc(sizeof(struct Ssource));
    if (source == NULL) return(101);
    source->C0 = c0;
@@ -820,7 +821,7 @@ int  emitterdata()
 {
    int   j,                  /* Node index    */
          n;                  /* # data items  */
-   float k;                  /* Flow coeff,   */
+   double k;                  /* Flow coeff,   */
 
    n = Ntokens;
    if (n < 2) return(201); 
@@ -848,7 +849,7 @@ int  qualdata()
 {
    int   j,n;
    long  i,i0,i1;
-   float c0;
+   double c0;
 
    if (Nnodes == 0) return(208);        /* No nodes defined yet */
    n = Ntokens;
@@ -905,7 +906,7 @@ int  reactdata()
 {
    int   item,j,n;
    long  i,i1,i2;
-   float y;
+   double y;
 
 /* Skip line if insufficient data */
    n = Ntokens;
@@ -1028,7 +1029,7 @@ int  mixingdata()
 */
 {
    int   i,j,n;
-   float v;
+   double v;
 
    if (Nnodes == 0) return(208);        /* No nodes defined yet */
    n = Ntokens;
@@ -1064,7 +1065,7 @@ int  statusdata()
 {
    int   j,n;
    long  i,i0,i1;
-   float y = 0.0;
+   double y = 0.0;
    char  status = ACTIVE;
 
    if (Nlinks == 0) return(210);
@@ -1129,7 +1130,7 @@ int  energydata()
 */
 {
    int j,k,n;
-   float y;
+   double y;
    STmplist *t;
 
 /* Check for sufficient data */
@@ -1139,7 +1140,6 @@ int  energydata()
 /* Check first keyword */
    if (match(Tok[0],w_DMNDCHARGE))               /* Demand charge */
    {
-      if (n < 3) return(201);
       if (!getfloat(Tok[2], &y)) return(213);
       Dcost = y;
       return(0);
@@ -1225,7 +1225,7 @@ int  reportdata()
 */
 {
    int    i,j,n;
-   float  y;
+   double  y;
 
    n = Ntokens - 1;
    if (n < 1) return(201);
@@ -1310,7 +1310,12 @@ int  reportdata()
    }
 
 /* Check if input is a reporting criterion. */
-   if ((i = findmatch(Tok[0],Fldname)) >= 0)
+
+/*** Special case needed to distinguish "HEAD" from "HEADLOSS" ***/            //(2.00.11 - LR)
+   if (strcomp(Tok[0], w_HEADLOSS)) i = HEADLOSS;                              //(2.00.11 - LR)
+   else i = findmatch(Tok[0],Fldname);                                         //(2.00.11 - LR)
+   if (i >= 0)                                                                 //(2.00.11 - LR)
+/*****************************************************************/            //(2.00.11 - LR)
    {
       if (i > FRICTION) return(201);
       if (Ntokens == 1 || match(Tok[1],w_YES))
@@ -1373,7 +1378,7 @@ int  timedata()
 {
    int    n;
    long   t;
-   float  y;
+   double  y;
 
    n = Ntokens - 1;
    if (n < 1) return(201);
@@ -1467,8 +1472,6 @@ int  optionchoice(int n)
 **    VERIFY              filename                               
 **    UNBALANCED          STOP/CONTINUE {Niter}
 **    PATTERN             id
-**    ADJUSTOR PATTERN    id                                                   Added 12/13/06
-**    INTEGRATION         STANDARD/MODIFIED                                    Added 1/24/07
 **--------------------------------------------------------------
 */
 {
@@ -1570,18 +1573,6 @@ int  optionchoice(int n)
       if (n < 1) return(0);
       strncpy(DefPatID,Tok[1],MAXID);
    }
-   else if (match(Tok[0],w_ADJUSTOR))           /* Adjustor option */          /*** Added 12/13/06 ***/
-   {                                                                           /*** Added 12/13/06 ***/
-      if (n < 2) return(0);                                                    /*** Added 12/13/06 ***/
-      strncpy(AdjustPatID,Tok[2],MAXID);                                       /*** Added 12/13/06 ***/
-   }                                                                           /*** Added 12/13/06 ***/
-   else if (match(Tok[0],w_INTEGRATION))        /* Integration option */       /*** Added 1/24/07 ***/
-   {                                                                           /*** Added 1/24/07 ***/
-      if (n < 1) return(0);                                                    /*** Added 1/24/07 ***/
-      else if (match(Tok[1],w_STANDARD)) Igrateflag = STANDARD;                /*** Added 1/24/07 ***/
-      else if (match(Tok[1],w_MODIFIED)) Igrateflag = MODIFIED;                /*** Added 1/24/07 ***/
-      else return(201);                                                        /*** Added 1/24/07 ***/
-   }                                                                           /*** Added 1/24/07 ***/
    else return(-1);
    return(0);
 }                        /* end of optionchoice */
@@ -1613,7 +1604,7 @@ int  optionvalue(int n)
 */
 {
    int    nvalue = 1;   /* Index of token with numerical value */
-   float  y;
+   double  y;
 
 /* Check for obsolete SEGMENTS keyword */
    if (match(Tok[0],w_SEGMENTS)) return(0);
@@ -1688,7 +1679,7 @@ int  getpumpcurve(int n)
 **---------------------------------------------------------
 */
 {
-   float a,b,c,h0,h1,h2,q1,q2;
+   double a,b,c,h0,h1,h2,q1,q2;
 
    if (n == 1)                /* Const. HP curve       */
    {
@@ -1728,8 +1719,8 @@ int  getpumpcurve(int n)
 }
 
 
-int  powercurve(float h0, float h1, float h2, float q1,
-                float q2, float *a, float *b, float *c)
+int  powercurve(double h0, double h1, double h2, double q1,
+                double q2, double *a, double *b, double *c)
 /*
 **---------------------------------------------------------
 **  Input:   h0 = shutoff head
@@ -1743,7 +1734,7 @@ int  powercurve(float h0, float h1, float h2, float q1,
 **----------------------------------------------------------
 */
 {
-    float h4,h5;
+    double h4,h5;
     if (
           h0      < TINY ||
           h0 - h1 < TINY ||
@@ -1820,7 +1811,7 @@ int  valvecheck(int type, int j1, int j2)
 }                   /* End of valvecheck */
 
 
-void  changestatus(int j, char status, float y)
+void  changestatus(int j, char status, double y)
 /*
 **--------------------------------------------------------------
 **  Input:   j      = link index                                   

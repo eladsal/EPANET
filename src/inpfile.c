@@ -8,6 +8,7 @@ DATE:       5/8/00
             3/1/01
             11/19/01                                          
             6/24/02
+            8/15/07    (2.00.11)
 AUTHOR:     L. Rossman
             US EPA - NRMRL
                                                                     
@@ -105,7 +106,7 @@ int  saveinpfile(char *fname)
 */
 {
    int   i,j,n;
-   float d,kc,ke,km,ucf;
+   double d,kc,ke,km,ucf;
 
 /*** Updated 6/24/02 ***/
    char  s[MAXLINE+1], s1[MAXLINE+1], s2[MAXLINE+1];
@@ -120,6 +121,7 @@ int  saveinpfile(char *fname)
 /* Copy [RULES], [COORDS], [VERTICES], [LABELS], [BACKDROP] & [TAGS] */
 /* sections from original input file to new input file */
 
+   ftmp = NULL;
    if (InFile)
    {
       ftmp = tmpfile();
@@ -622,16 +624,21 @@ int  saveinpfile(char *fname)
    }
    for (i=0; i<MAXVAR; i++)
    {
+/*** Updated ********************************************************/         //(2.00.11 - LR)
       if (Field[i].Enabled == TRUE)
+      {
          fprintf(f, "\n %-20sPRECISION %d", Field[i].Name, Field[i].Precision);
-      if (Field[i].RptLim[LOW] < BIG)
-         fprintf(f, "\n %-20sBELOW %.4f", Field[i].Name, Field[i].RptLim[LOW]);
-      if (Field[i].RptLim[HI] > -BIG)
-         fprintf(f, "\n %-20sABOVE %.4f", Field[i].Name, Field[i].RptLim[HI]);
+         if (Field[i].RptLim[LOW] < BIG)
+            fprintf(f, "\n %-20sBELOW %.4f", Field[i].Name, Field[i].RptLim[LOW]);
+         if (Field[i].RptLim[HI] > -BIG)
+            fprintf(f, "\n %-20sABOVE %.4f", Field[i].Name, Field[i].RptLim[HI]);
+      }
+      else fprintf(f, "\n  %-20sNO", Field[i].Name);
+/********************************************************************/
    }
    fprintf(f, "\n");
 
-/*** Updated 3/10/07  ***/
+/*** Updated *****************************************/                        //(2.00.11 - LR)
 /* Copy data from scratch file to new input file */
    if (ftmp != NULL)
    {
@@ -639,7 +646,7 @@ int  saveinpfile(char *fname)
       while ( (j = fgetc(ftmp)) != EOF ) fputc(j, f);
       fclose(ftmp);
    } 
-/*** End of update ***/   
+/*****************************************************/   
 
    fprintf(f, "\n\n[END]");
    fclose(f);

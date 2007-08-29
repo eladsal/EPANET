@@ -589,7 +589,7 @@ void  transpose(int n, int *il, int *jl, int *xl, int *ilt, int *jlt,
 }                        /* End of transpose */
 
 
-int  linsolve(int n, REAL *Aii, REAL *Aij, REAL *B)
+int  linsolve(int n, double *Aii, double *Aij, double *B)
 /*
 **--------------------------------------------------------------
 ** Input:   n    = number of equations                          
@@ -617,13 +617,13 @@ int  linsolve(int n, REAL *Aii, REAL *Aij, REAL *B)
 **--------------------------------------------------------------
 */
 {
-   int  *link, *first;
-   int  i, istop, istrt, isub, j, k, kfirst, newk;
-   int  errcode = 0;
-   REAL bj, diagj, ljk;
-   REAL *temp;
+   int    *link, *first;
+   int    i, istop, istrt, isub, j, k, kfirst, newk;
+   int    errcode = 0;
+   double bj, diagj, ljk;
+   double *temp;
 
-   temp = (REAL *) calloc(n+1, sizeof(REAL));
+   temp = (double *) calloc(n+1, sizeof(double));
    link = (int *) calloc(n+1,sizeof(int));
    first = (int *) calloc(n+1,sizeof(int));
    ERRCODE(MEMCHECK(temp));
@@ -634,7 +634,7 @@ int  linsolve(int n, REAL *Aii, REAL *Aij, REAL *B)
       errcode = -errcode;
       goto ENDLINSOLVE;
    }
-   memset(temp,0,(n+1)*sizeof(REAL));
+   memset(temp,0,(n+1)*sizeof(double));
    memset(link,0,(n+1)*sizeof(int));
 
    /* Begin numerical factorization of matrix A into L */

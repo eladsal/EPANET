@@ -11,9 +11,13 @@ DATE:       5/8/00
             3/1/01
 AUTHOR:     L. Rossman
             US EPA - NRMRL
-                                                                   
+                                                                                
 **************************************************************************
 */
+
+/*****************************************************************/
+/*   Most float arguments have been changed to double - 7/3/07   */
+/*****************************************************************/
 
 /* ------- EPANET.C --------------------*/
 /*
@@ -29,8 +33,8 @@ int     openfiles(char *,char *,char *);  /* Opens input & report files */
 int     openhydfile(void);                /* Opens hydraulics file      */
 int     openoutfile(void);                /* Opens binary output file   */
 int     strcomp(char *, char *);          /* Compares two strings       */
-float   interp(int, float *,              /* Interpolates a data curve  */
-               float *, float);
+double  interp(int, double *,              /* Interpolates a data curve  */
+               double *, double);
 int     findnode(char *);                 /* Finds node's index from ID */
 int     findlink(char *);                 /* Finds link's index from ID */
 char*   geterrmsg(int);                   /* Gets text of error message */
@@ -63,8 +67,8 @@ int     getcurves(void);                  /* Gets curve data from list  */
 int     findmatch(char *,char *[]);       /* Finds keyword in line      */
 int     match(char *, char *);            /* Checks for word match      */
 int     gettokens(char *);                /* Tokenizes input line       */
-int     getfloat(char *, float *);        /* Converts string to float   */
-float   hour(char *, char *);             /* Converts time to hours     */
+int     getfloat(char *, double *);       /* Converts string to double   */
+double  hour(char *, char *);             /* Converts time to hours     */
 int     setreport(char *);                /* Processes reporting command*/
 void    inperrmsg(int,int,char *);        /* Input error message        */
 
@@ -91,11 +95,11 @@ int     optiondata(void);                 /* Processes analysis options */
 int     optionchoice(int);                /* Processes option choices   */
 int     optionvalue(int);                 /* Processes option values    */
 int     getpumpcurve(int);                /* Constructs a pump curve    */
-int     powercurve(float, float, float,   /* Coeffs. of power pump curve*/
-                   float, float, float *,
-                   float *, float *);
+int     powercurve(double, double, double,/* Coeffs. of power pump curve*/
+                   double, double, double *,
+                   double *, double *);
 int     valvecheck(int, int, int);        /* Checks valve placement     */
-void    changestatus(int, char, float);   /* Changes status of a link   */
+void    changestatus(int, char, double);  /* Changes status of a link   */
 
 /* -------------- RULES.C --------------*/
 void    initrules(void);                  /* Initializes rule base      */
@@ -109,22 +113,22 @@ void    freerules(void);                  /* Frees rule base memory     */
 int     writereport(void);                /* Writes formatted report    */
 void    writelogo(void);                  /* Writes program logo        */
 void    writesummary(void);               /* Writes network summary     */
-void    writehydstat(int,float);          /* Writes hydraulic status    */
+void    writehydstat(int,double);          /* Writes hydraulic status    */
 void    writeenergy(void);                /* Writes energy usage        */
 int     writeresults(void);               /* Writes node/link results   */
 void    writeheader(int,int);             /* Writes heading on report   */
 void    writeline(char *);                /* Writes line to report file */
-void    writerelerr(int, float);          /* Writes convergence error   */
+void    writerelerr(int, double);          /* Writes convergence error   */
 void    writestatchange(int,char,char);   /* Writes link status change  */
 void    writecontrolaction(int, int);     /* Writes control action taken*/
 void    writeruleaction(int, char *);     /* Writes rule action taken   */
-int     writehydwarn(int,float);          /* Writes hydraulic warnings  */
+int     writehydwarn(int,double);          /* Writes hydraulic warnings  */
 void    writehyderr(int);                 /* Writes hydraulic error msg.*/
 int     disconnected(void);               /* Checks for disconnections  */
 void    marknodes(int, int *, char *);    /* Identifies connected nodes */
 void    getclosedlink(int, char *);       /* Finds a disconnecting link */
 void    writelimits(int,int);             /* Writes reporting limits    */
-int     checklimits(float *,int,int);     /* Checks variable limits     */
+int     checklimits(double *,int,int);     /* Checks variable limits     */
 void    writetime(char *);                /* Writes current clock time  */
 char    *clocktime(char *, long);         /* Converts time to hrs:min   */
 char    *fillstr(char *, char, int);      /* Fills string with character*/
@@ -141,12 +145,12 @@ int     nexthyd(long *);                  /* Moves to next time period  */
 void    closehyd(void);                   /* Closes hydraulics solver   */
 int     allocmatrix(void);                /* Allocates matrix coeffs.   */
 void    freematrix(void);                 /* Frees matrix coeffs.       */
-void    initlinkflow(int, char, float);   /* Initializes link flow      */
-void    setlinkflow(int, float);          /* Sets link flow via headloss*/
+void    initlinkflow(int, char, double);  /* Initializes link flow      */
+void    setlinkflow(int, double);         /* Sets link flow via headloss*/
 void    setlinkstatus(int, char, char *,  /* Sets link status           */
-                      float *);
-void    setlinksetting(int, float,        /* Sets pump/valve setting    */
-                       char *, float *);
+                      double *);
+void    setlinksetting(int, double,       /* Sets pump/valve setting    */
+                       char *, double *);
 void    resistance(int);                  /* Computes resistance coeff. */
 void    demands(void);                    /* Computes current demands   */
 int     controls(void);                   /* Controls link settings     */
@@ -155,37 +159,37 @@ void    tanktimestep(long *);             /* Time till tanks fill/drain */
 void    controltimestep(long *);          /* Time till control action   */
 void    ruletimestep(long *);             /* Time till rule action      */
 void    addenergy(long);                  /* Accumulates energy usage   */
-void    getenergy(int, float *, float *); /* Computes link energy use   */
+void    getenergy(int, double *, double *); /* Computes link energy use   */
 void    tanklevels(long);                 /* Computes new tank levels   */
-float   tankvolume(int,float);            /* Finds tank vol. from grade */
-float   tankgrade(int,float);             /* Finds tank grade from vol. */
-int     netsolve(int *,float *);          /* Solves network equations   */
+double  tankvolume(int,double);           /* Finds tank vol. from grade */
+double  tankgrade(int,double);            /* Finds tank grade from vol. */
+int     netsolve(int *,double *);         /* Solves network equations   */
 int     badvalve(int);                    /* Checks for bad valve       */
 int     valvestatus(void);                /* Updates valve status       */
 int     linkstatus(void);                 /* Updates link status        */
-char    cvstatus(char,float,float);       /* Updates CV status          */
-char    pumpstatus(int,float);            /* Updates pump status        */
-char    prvstatus(int,char,float,         /* Updates PRV status         */
-                  float,float);
-char    psvstatus(int,char,float,         /* Updates PSV status         */
-                  float,float);
-char    fcvstatus(int,char,float,         /* Updates FCV status         */
-                  float);
+char    cvstatus(char,double,double);     /* Updates CV status          */
+char    pumpstatus(int,double);           /* Updates pump status        */
+char    prvstatus(int,char,double,        /* Updates PRV status         */
+                  double,double);
+char    psvstatus(int,char,double,        /* Updates PSV status         */
+                  double,double);
+char    fcvstatus(int,char,double,        /* Updates FCV status         */
+                  double);
 void    tankstatus(int,int,int);          /* Checks if tank full/empty  */
 int     pswitch(void);                    /* Pressure switch controls   */
-REAL    newflows(void);                   /* Updates link flows         */
+double  newflows(void);                   /* Updates link flows         */
 void    newcoeffs(void);                  /* Computes matrix coeffs.    */
 void    linkcoeffs(void);                 /* Computes link coeffs.      */
 void    nodecoeffs(void);                 /* Computes node coeffs.      */
 void    valvecoeffs(void);                /* Computes valve coeffs.     */
 void    pipecoeff(int);                   /* Computes pipe coeff.       */
-REAL    DWcoeff(int, REAL *);             /* Computes D-W coeff.        */
+double  DWcoeff(int, double *);           /* Computes D-W coeff.        */
 void    pumpcoeff(int);                   /* Computes pump coeff.       */
 
 /*** Updated 10/25/00 ***/
 /*** Updated 12/29/00 ***/
-void    curvecoeff(int,float,float *,     /* Computes curve coeffs.     */
-                             float *);
+void    curvecoeff(int,double,double *,   /* Computes curve coeffs.     */
+                             double *);
 
 void    gpvcoeff(int);                    /* Computes GPV coeff.        */
 void    pbvcoeff(int);                    /* Computes PBV coeff.        */
@@ -194,7 +198,7 @@ void    prvcoeff(int,int,int);            /* Computes PRV coeff.        */
 void    psvcoeff(int,int,int);            /* Computes PSV coeff.        */
 void    fcvcoeff(int,int,int);            /* Computes FCV coeff.        */
 void    emittercoeffs(void);              /* Computes emitter coeffs.   */
-REAL    emitflowchange(int);              /* Computes new emitter flow  */
+double  emitflowchange(int);              /* Computes new emitter flow  */
 
 /* ----------- SMATRIX.C ---------------*/
 int     createsparse(void);               /* Creates sparse matrix      */
@@ -215,8 +219,8 @@ int     storesparse(int);                 /* Stores sparse matrix       */
 int     ordersparse(int);                 /* Orders matrix storage      */
 void    transpose(int,int *,int *,        /* Transposes sparse matrix   */
         int *,int *,int *,int *,int *);
-int     linsolve(int, REAL *, REAL *,     /* Solution of linear eqns.   */
-                 REAL *);                 /* via Cholesky factorization */
+int     linsolve(int, double *, double *, /* Solution of linear eqns.   */
+                 double *);               /* via Cholesky factorization */
 
 /* ----------- QUALITY.C ---------------*/
 int     openqual(void);                   /* Opens WQ solver system     */
@@ -232,7 +236,7 @@ void    initsegs(void);                   /* Initializes WQ segments    */
 void    reorientsegs(void);               /* Re-orients WQ segments     */
 void    updatesegs(long);                 /* Updates quality in segments*/
 void    removesegs(int);                  /* Removes a WQ segment       */
-void    addseg(int,float,float);          /* Adds a WQ segment to pipe  */
+void    addseg(int,double,double);        /* Adds a WQ segment to pipe  */
 void    accumulate(long);                 /* Sums mass flow into node   */
 void    updatenodes(long);                /* Updates WQ at nodes        */
 void    sourceinput(long);                /* Computes source inputs     */
@@ -243,15 +247,15 @@ void    tankmix1(int, long);              /* Complete mix tank model    */
 void    tankmix2(int, long);              /* 2-compartment tank model   */
 void    tankmix3(int, long);              /* FIFO tank model            */
 void    tankmix4(int, long);              /* LIFO tank model            */
-float   sourcequal(Psource);              /* Finds WQ input from source */
-float   avgqual(int);                     /* Finds avg. quality in pipe */
+double  sourcequal(Psource);              /* Finds WQ input from source */
+double  avgqual(int);                     /* Finds avg. quality in pipe */
 void    ratecoeffs(void);                 /* Finds wall react. coeffs.  */
-float   piperate(int);                    /* Finds wall react. coeff.   */
-float   pipereact(int,float,float,long);  /* Reacts water in a pipe     */
-float   tankreact(float,float,float,
+double  piperate(int);                    /* Finds wall react. coeff.   */
+double  pipereact(int,double,double,long);/* Reacts water in a pipe     */
+double  tankreact(double,double,double,
                   long);                  /* Reacts water in a tank     */
-float   bulkrate(float,float,float);      /* Finds bulk reaction rate   */
-float   wallrate(float,float,float,float);/* Finds wall reaction rate   */
+double  bulkrate(double,double,double);   /* Finds bulk reaction rate   */
+double  wallrate(double,double,double,double);/* Finds wall reaction rate   */
 
 
 /* ------------ OUTPUT.C ---------------*/
@@ -262,14 +266,14 @@ int     saveenergy(void);                 /* Saves energy usage         */
 int     readhyd(long *);                  /* Reads hydraulics from file */
 int     readhydstep(long *);              /* Reads time step from file  */
 int     saveoutput(void);                 /* Saves results to file      */
-int     nodeoutput(int,float *,float);    /* Saves node results to file */
-int     linkoutput(int,float *,float);    /* Saves link results to file */
+int     nodeoutput(int, REAL4 *, double); /* Saves node results to file */
+int     linkoutput(int, REAL4 *, double); /* Saves link results to file */
 int     savefinaloutput(void);            /* Finishes saving output     */
-int     savetimestat(float *, char);      /* Saves time stats to file   */
-int     savenetreacts(REAL, REAL, REAL,
-                      REAL);              /* Saves react. rates to file */
+int     savetimestat(REAL4 *, char);      /* Saves time stats to file   */
+int     savenetreacts(double, double,
+                      double, double);    /* Saves react. rates to file */
 int     saveepilog(void);                 /* Saves output file epilog   */
 
 
-/* ------------ INPFILE.C ---------------*/
-int     saveinpfile(char *);             /* Saves network to text file  */
+/* ------------ INPFILE.C --------------*/
+int     saveinpfile(char *);              /* Saves network to text file  */

@@ -40,7 +40,7 @@ SHELL = /bin/sh
 # Target filenames
 # svnname.sh constructs a name: <prefix><root><Rev><postfix>
 # where <Rev> is the atomic revision number of the svn repo.
-epanetsvnpath = ../../../trunk
+epanetsvnpath = ../../..
 epanetrootname := $(shell ../svnname.sh $(epanetsvnpath) "" epanet_gcc_ "")
 libname := lib$(epanetrootname).so
 exename := $(epanetrootname)

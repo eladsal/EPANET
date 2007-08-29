@@ -1,36 +1,38 @@
 /*
 ***********************************************************************
-
-TYPES.H -- Global constants and data types for EPANET program
-
-VERSION:    2.00
+                                                                     
+TYPES.H -- Global constants and data types for EPANET program  
+                                                                     
+VERSION:    2.00                                               
 DATE:       5/8/00
             9/7/00
             10/25/00
             3/1/01
             12/6/01
             6/24/02
-            3/29/06
-            12/13/06
-            1/24/07
-AUTHOR:     L. Rossman
+            8/15/07    (2.00.11)
+AUTHOR:     L. Rossman                                         
             US EPA - NRMRL
-
+                                                                     
 **********************************************************************
 */
+
+/*********************************************************/
+/* All floats have been re-declared as doubles (7/3/07). */
+/*********************************************************/ 
+
 /*
 -----------------------------
    Global Constants
 -----------------------------
 */
-/*** Updated 3/29/06 ***/
-#define   CODEVERSION        20011
-
+/*** Updated ***/
+#define   CODEVERSION        20011                                             //(2.00.11 - LR)
 #define   MAGICNUMBER        516114521
 #define   VERSION            200
 #define   EOFMARK            0x1A  /* Use 0x04 for UNIX systems */
 #define   MAXTITLE  3        /* Max. # title lines                     */
-#define   MAXID     31       /* Max. # characters in ID name           */      //12/13/06
+#define   MAXID     31       /* Max. # characters in ID name           */      //(2.00.11 - LR)
 #define   MAXMSG    79       /* Max. # characters in message text      */
 #define   MAXLINE   255      /* Max. # characters read from input line */
 #define   MAXFNAME  259      /* Max. # characters in file name         */
@@ -46,7 +48,7 @@ AUTHOR:     L. Rossman
 
 /*** Updated 9/7/00 ***/
 /* Various conversion factors */
-#define   GPMperCFS   448.831
+#define   GPMperCFS   448.831 
 #define   AFDperCFS   1.9837
 #define   MGDperCFS   0.64632
 #define   IMGDperCFS  0.5382
@@ -72,7 +74,7 @@ AUTHOR:     L. Rossman
 
 /*
 ---------------------------------------------------------------------
-   Macro to test for successful allocation of memory
+   Macro to test for successful allocation of memory            
 ---------------------------------------------------------------------
 */
 #define  MEMCHECK(x)  (((x) == NULL) ? 101 : 0 )
@@ -80,9 +82,9 @@ AUTHOR:     L. Rossman
 
 /*
 ---------------------------------------------------------------------
-   Conversion macros to be used in place of functions
+   Conversion macros to be used in place of functions             
 ---------------------------------------------------------------------
-*/
+*/ 
 #define INT(x)   ((int)(x))                   /* integer portion of x  */
 #define FRAC(x)  ((x)-(int)(x))               /* fractional part of x  */
 #define ABS(x)   (((x)<0) ? -(x) : (x))       /* absolute value of x   */
@@ -98,10 +100,10 @@ AUTHOR:     L. Rossman
 /*
 ------------------------------------------------------
    Macro to evaluate function x with error checking
-   (Fatal errors are numbered higher than 100)
+   (Fatal errors are numbered higher than 100)             
 ------------------------------------------------------
 */
-#define ERRCODE(x) (errcode = ((errcode>100) ? (errcode) : (x)))
+#define ERRCODE(x) (errcode = ((errcode>100) ? (errcode) : (x))) 
 
 /*
 ------------------------------------------------------
@@ -113,11 +115,11 @@ AUTHOR:     L. Rossman
 
 /*
 ------------------------------------------------------
-   Global Data Structures
+   Global Data Structures                             
 ------------------------------------------------------
 */
-typedef  double        REAL;
-typedef  int           INT4;
+typedef  float        REAL4;                                                   //(2.00.11 - LR)
+typedef  long         INT4;                                                    //(2.00.11 - LR)
 
 struct IDstring    /* Holds component ID labels */
 {
@@ -126,7 +128,7 @@ struct IDstring    /* Holds component ID labels */
 
 struct  Floatlist  /* Element of list of floats */
 {
-   float   value;
+   double  value;
    struct  Floatlist *next;
 };
 typedef struct Floatlist SFloatlist;
@@ -143,103 +145,103 @@ typedef struct Tmplist STmplist;
 
 typedef struct        /* TIME PATTERN OBJECT */
 {
-   char  ID[MAXID+1]; /* Pattern ID       */
-   int   Length;      /* Pattern length   */
-   float *F;          /* Pattern factors  */
+   char   ID[MAXID+1]; /* Pattern ID       */
+   int    Length;      /* Pattern length   */
+   double *F;          /* Pattern factors  */
 }  Spattern;
 
 typedef struct        /* CURVE OBJECT */
 {
-   char  ID[MAXID+1]; /* Curve ID         */
-   int   Type;        /* Curve type       */
-   int   Npts;        /* Number of points */
-   float *X;          /* X-values         */
-   float *Y;          /* Y-values         */
+   char   ID[MAXID+1]; /* Curve ID         */
+   int    Type;        /* Curve type       */
+   int    Npts;        /* Number of points */
+   double *X;          /* X-values         */
+   double *Y;          /* Y-values         */
 }  Scurve;
 
 struct Sdemand            /* DEMAND CATEGORY OBJECT */
 {
-   float Base;            /* Baseline demand  */
-   int   Pat;             /* Pattern index    */
-   struct Sdemand *next;  /* Next record      */
+   double Base;            /* Baseline demand  */
+   int    Pat;             /* Pattern index    */
+   struct Sdemand *next;   /* Next record      */
 };
 typedef struct Sdemand *Pdemand; /* Pointer to demand object */
 
 struct Ssource     /* WQ SOURCE OBJECT */
 {
  /*int   Node;*/     /* Node index of source     */
-   float C0;       /* Base concentration/mass  */
-   int   Pat;      /* Pattern index            */
-   float Smass;    /* Actual mass flow rate    */
-   char  Type;     /* SourceType (see below)   */
+   double C0;       /* Base concentration/mass  */
+   int    Pat;      /* Pattern index            */
+   double Smass;    /* Actual mass flow rate    */
+   char   Type;     /* SourceType (see below)   */
 };
 typedef struct Ssource *Psource; /* Pointer to WQ source object */
 
 typedef struct            /* NODE OBJECT */
 {
-   char   ID[MAXID+1];    /* Node ID          */
-   float  El;             /* Elevation        */
-   Pdemand D;             /* Demand pointer   */
-   Psource S;             /* Source pointer   */
-   float  C0;             /* Initial quality  */
-   float  Ke;             /* Emitter coeff.   */
-   char   Rpt;            /* Reporting flag   */
+   char    ID[MAXID+1];    /* Node ID          */
+   double  El;             /* Elevation        */
+   Pdemand D;              /* Demand pointer   */
+   Psource S;              /* Source pointer   */
+   double  C0;             /* Initial quality  */
+   double  Ke;             /* Emitter coeff.   */
+   char    Rpt;            /* Reporting flag   */
 }  Snode;
 
 typedef struct            /* LINK OBJECT */
 {
-   char   ID[MAXID+1];    /* Link ID           */
-   int    N1;             /* Start node index  */
-   int    N2;             /* End node index    */
-   float  Diam;           /* Diameter          */
-   float  Len;            /* Length            */
-   float  Kc;             /* Roughness         */
-   float  Km;             /* Minor loss coeff. */
-   float  Kb;             /* Bulk react. coeff */
-   float  Kw;             /* Wall react. coeff */
-   float  R;              /* Flow resistance   */
-   char   Type;           /* Link type         */
-   char   Stat;           /* Initial status    */
-   char   Rpt;            /* Reporting flag    */
+   char    ID[MAXID+1];    /* Link ID           */
+   int     N1;             /* Start node index  */
+   int     N2;             /* End node index    */
+   double  Diam;           /* Diameter          */
+   double  Len;            /* Length            */
+   double  Kc;             /* Roughness         */
+   double  Km;             /* Minor loss coeff. */
+   double  Kb;             /* Bulk react. coeff */
+   double  Kw;             /* Wall react. coeff */
+   double  R;              /* Flow resistance   */
+   char    Type;           /* Link type         */
+   char    Stat;           /* Initial status    */
+   char    Rpt;            /* Reporting flag    */
 }  Slink;
 
 typedef struct     /* TANK OBJECT */
 {
-   int   Node;     /* Node index of tank       */
-   float A;        /* Tank area                */
-   float Hmin;     /* Minimum water elev       */
-   float Hmax;     /* Maximum water elev       */
-   float H0;       /* Initial water elev       */
-   float Vmin;     /* Minimum volume           */
-   float Vmax;     /* Maximum volume           */
-   float V0;       /* Initial volume           */
-   float Kb;       /* Reaction coeff. (1/days) */
-   float V;        /* Tank volume              */
-   float C;        /* Concentration            */
-   int   Pat;      /* Fixed grade time pattern */
-   int   Vcurve;   /* Vol.- elev. curve index  */
-   char  MixModel; /* Type of mixing model     */
-                   /* (see MixType below)      */
-   float V1max;    /* Mixing compartment size  */
+   int    Node;     /* Node index of tank       */
+   double A;        /* Tank area                */
+   double Hmin;     /* Minimum water elev       */
+   double Hmax;     /* Maximum water elev       */
+   double H0;       /* Initial water elev       */
+   double Vmin;     /* Minimum volume           */
+   double Vmax;     /* Maximum volume           */
+   double V0;       /* Initial volume           */
+   double Kb;       /* Reaction coeff. (1/days) */
+   double V;        /* Tank volume              */
+   double C;        /* Concentration            */
+   int    Pat;      /* Fixed grade time pattern */
+   int    Vcurve;   /* Vol.- elev. curve index  */
+   char   MixModel; /* Type of mixing model     */
+                    /* (see MixType below)      */
+   double V1max;    /* Mixing compartment size  */
 }  Stank;
 
 typedef struct     /* PUMP OBJECT */
 {
-   int   Link;     /* Link index of pump          */
-   int   Ptype;    /* Pump curve type             */
-                   /* (see PumpType below)        */
-   float Q0;       /* Initial flow                */
-   float Qmax;     /* Maximum flow                */
-   float Hmax;     /* Maximum head                */
-   float H0;       /* Shutoff head                */
-   float R;        /* Flow coeffic.               */
-   float N;        /* Flow exponent               */
-   int   Hcurve;   /* Head v. flow curve index    */
-   int   Ecurve;   /* Effic. v. flow curve index  */
-   int   Upat;     /* Utilization pattern index   */
-   int   Epat;     /* Energy cost pattern index   */
-   float Ecost;    /* Unit energy cost            */
-   float Energy[6];  /* Energy usage statistics:  */
+   int    Link;     /* Link index of pump          */
+   int    Ptype;    /* Pump curve type             */
+                    /* (see PumpType below)        */
+   double Q0;       /* Initial flow                */
+   double Qmax;     /* Maximum flow                */
+   double Hmax;     /* Maximum head                */
+   double H0;       /* Shutoff head                */
+   double R;        /* Flow coeffic.               */
+   double N;        /* Flow exponent               */
+   int    Hcurve;   /* Head v. flow curve index    */
+   int    Ecurve;   /* Effic. v. flow curve index  */
+   int    Upat;     /* Utilization pattern index   */
+   int    Epat;     /* Energy cost pattern index   */
+   double Ecost;    /* Unit energy cost            */
+   double Energy[6];  /* Energy usage statistics:  */
                      /* 0 = pump utilization      */
                      /* 1 = avg. efficiency       */
                      /* 2 = avg. kW/flow          */
@@ -255,40 +257,40 @@ typedef struct     /* VALVE OBJECT */
 
 typedef struct     /* CONTROL STATEMENT */
 {
-   int   Link;     /* Link index         */
-   int   Node;     /* Control node index */
-   long  Time;     /* Control time       */
-   float Grade;    /* Control grade      */
-   float Setting;  /* New link setting   */
-   char  Status;   /* New link status    */
-   char  Type;     /* Control type       */
+   int    Link;     /* Link index         */
+   int    Node;     /* Control node index */
+   long   Time;     /* Control time       */
+   double Grade;    /* Control grade      */
+   double Setting;  /* New link setting   */
+   char   Status;   /* New link status    */
+   char   Type;     /* Control type       */
                    /* (see ControlType below) */
 }  Scontrol;
 
 struct   Sadjlist         /* NODE ADJACENCY LIST ITEM */
 {
-   int   node;            /* Index of connecting node */
-   int   link;            /* Index of connecting link */
-   struct Sadjlist *next; /* Next item in list        */
+   int    node;            /* Index of connecting node */
+   int    link;            /* Index of connecting link */
+   struct Sadjlist *next;  /* Next item in list        */
 };
 /* Pointer to adjacency list item */
-typedef struct Sadjlist *Padjlist;
+typedef struct Sadjlist *Padjlist; 
 
-struct  Sseg              /* PIPE SEGMENT record used */
-{                         /*   for WQ routing         */
-   float  v;              /* Segment volume      */
-   float  c;              /* Water quality value */
-   struct Sseg *prev;     /* Record for previous segment */
+struct  Sseg               /* PIPE SEGMENT record used */
+{                          /*   for WQ routing         */
+   double  v;              /* Segment volume      */
+   double  c;              /* Water quality value */
+   struct  Sseg *prev;     /* Record for previous segment */
 };
 typedef struct Sseg *Pseg;    /* Pointer to pipe segment */
 
 typedef struct            /* FIELD OBJECT of report table */
 {
-   char  Name[MAXID+1];   /* Name of reported variable  */
-   char  Units[MAXID+1];  /* Units of reported variable */
-   char  Enabled;         /* Enabled if in table        */
-   int   Precision;       /* Number of decimal places   */
-   float RptLim[2];       /* Lower/upper report limits  */
+   char   Name[MAXID+1];   /* Name of reported variable  */
+   char   Units[MAXID+1];  /* Units of reported variable */
+   char   Enabled;         /* Enabled if in table        */
+   int    Precision;       /* Number of decimal places   */
+   double RptLim[2];       /* Lower/upper report limits  */
 } SField;
 
 
@@ -395,7 +397,7 @@ typedef struct            /* FIELD OBJECT of report table */
                  {MIX1,         /*   1-compartment model               */
                   MIX2,         /*   2-compartment model               */
                   FIFO,         /*   First in, first out model         */
-                  LIFO};        /*   Last in, first out model          */
+                  LIFO};        /*   Last in, first out model          */ 
 
  enum TstatType                 /* Time series statistics              */
                  {SERIES,       /*   none                              */
@@ -403,10 +405,6 @@ typedef struct            /* FIELD OBJECT of report table */
                   MIN,          /*   minimum values                    */
                   MAX,          /*   maximum values                    */
                   RANGE};       /*   max - min values                  */
-
- enum IgrateType                /* Type of integration method          */      /*** Added 1/24/07 ***/
-                 {STANDARD,     /*   standard Euler                    */      /*** Added 1/24/07 ***/
-                  MODIFIED};    /*   modified Euler                    */      /*** Added 1/24/07 ***/
 
 #define MAXVAR   21             /* Max. # types of network variables   */
                                 /* (equals # items enumed below)       */
@@ -446,3 +444,4 @@ enum HdrType                    /* Type of table heading   */
                   ENERHDR,      /*  Energy Usage           */
                   NODEHDR,      /*  Node Results           */
                   LINKHDR};     /*  Link Results           */
+

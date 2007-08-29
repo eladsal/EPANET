@@ -5,8 +5,6 @@
 VERSION:    2.00                                               
 DATE:       5/8/00
             6/24/02
-            12/13/06
-            1/24/07                                           
 AUTHOR:     L. Rossman                                         
             US EPA - NRMRL
                                                                      
@@ -31,15 +29,16 @@ EXTERN char     Msg[MAXMSG+1],         /* Text of output message       */
                 ChemName[MAXID+1],     /* Name of chemical             */
                 ChemUnits[MAXID+1],    /* Units of chemical            */
                 DefPatID[MAXID+1],     /* Default demand pattern ID    */
-                AdjustPatID[MAXID+1],  /* Demand adjustor pattern ID   */      /*** Added 12/13/06 ***/
-                Atime[13],             /* Clock time (hrs:min:sec)     */      /*** Updated 6/24/02 ***/
+
+/*** Updated 6/24/02 ***/
+                Atime[13],             /* Clock time (hrs:min:sec)     */
+
                 Hydflag,               /* Hydraulics flag              */
                 Qualflag,              /* Water quality flag           */
                 Unitsflag,             /* Unit system flag             */
                 Flowflag,              /* Flow units flag              */
                 Pressflag,             /* Pressure units flag          */
                 Formflag,              /* Hydraulic formula flag       */
-                Igrateflag,            /* Tank level integration flag  */      /*** Added 1/24/07 ***/
                 Rptflag,               /* Report flag                  */
                 Summaryflag,           /* Report summary flag          */
                 Messageflag,           /* Error/warning message flag   */
@@ -80,7 +79,6 @@ EXTERN int      MaxNodes,              /* Node count from input file   */
                 Nperiods,              /* Number of reporting periods  */
                 Ncoeffs,               /* Number of non-0 matrix coeffs*/
                 DefPat,                /* Default demand pattern       */
-                AdjustPat,             /* Demand adjustment pattern    */      /*** Added 12/13/06 ***/
                 Epat,                  /* Energy cost time pattern     */
                 MaxIter,               /* Max. hydraulic trials        */
                 ExtraIter,             /* Extra hydraulic trials       */
@@ -88,7 +86,7 @@ EXTERN int      MaxNodes,              /* Node count from input file   */
                 PageSize,              /* Lines/page in output report  */
                 CheckFreq,             /* Hydraulics solver parameter  */
                 MaxCheck;              /* Hydraulics solver parameter  */
-EXTERN float    Ucf[MAXVAR],           /* Unit conversion factors      */
+EXTERN double   Ucf[MAXVAR],           /* Unit conversion factors      */
                 Ctol,                  /* Water quality tolerance      */
                 Htol,                  /* Hydraulic head tolerance     */
                 Qtol,                  /* Flow rate tolerance          */
@@ -134,14 +132,14 @@ EXTERN SField   Field[MAXVAR];         /* Output reporting fields      */
 /* Array pointers not allocated and freed in same routine */
 EXTERN char     *S,                    /* Link status                  */
                 *OldStat;              /* Previous link/tank status    */
-EXTERN float    *D,                    /* Node actual demand           */
+EXTERN double   *D,                    /* Node actual demand           */
                 *C,                    /* Node actual quality          */
                 *E,                    /* Emitter flows                */
                 *K,                    /* Link settings                */
                 *Q,                    /* Link flows                   */
                 *R,                    /* Pipe reaction rate           */
                 *X;                    /* General purpose array        */
-EXTERN REAL     *H;                    /* Node heads                   */
+EXTERN double   *H;                    /* Node heads                   */
 EXTERN STmplist *Patlist;              /* Temporary time pattern list  */ 
 EXTERN STmplist *Curvelist;            /* Temporary list of curves     */
 EXTERN Spattern *Pattern;              /* Time patterns                */
@@ -175,10 +173,10 @@ EXTERN Padjlist *Adjlist;              /* Node adjacency lists         */
 **       The following arrays are used to efficiently manage this sparsity:
 */
 
-EXTERN REAL     *Aii,        /* Diagonal coeffs. of A               */
+EXTERN double   *Aii,        /* Diagonal coeffs. of A               */
                 *Aij,        /* Non-zero, off-diagonal coeffs. of A */
                 *F;          /* Right hand side coeffs.             */
-EXTERN float    *P,          /* Inverse headloss derivatives        */
+EXTERN double   *P,          /* Inverse headloss derivatives        */
                 *Y;          /* Flow correction factors             */
 EXTERN int      *Order,      /* Node-to-row of A                    */
                 *Row,        /* Row-to-node of A                    */
@@ -190,5 +188,3 @@ EXTERN int      *Order,      /* Node-to-row of A                    */
 EXTERN int      *XLNZ,       /* Start position of each column in NZSUB  */
                 *NZSUB,      /* Row index of each coeff. in each column */
                 *LNZ;        /* Position of each coeff. in Aij array    */
-
-

@@ -11,10 +11,7 @@ DATE:       6/5/00
             3/1/01
             11/19/01
             6/24/02
-            2/10/05
-            5/10/06
-            12/13/06
-            1/24/07
+            8/15/07    (2.00.11)
 AUTHOR:     L. Rossman
             US EPA - NRMRL
                                                                    
@@ -78,11 +75,11 @@ AUTHOR:     L. Rossman
 /* Flag used to halt taking further time steps */
 int Haltflag;
 
-/* Declarations for modified Euler integration */                              /*** Added 1/24/07 ***/ 
-float *tankV;                                                                  /*** Added 1/24/07 ***/
-float *tankQ;                                                                  /*** Added 1/24/07 ***/
-REAL  *tankH;                                                                  /*** Added 1/24/07 ***/
-int   modEuler(long tstep);                                                    /*** Added 1/24/07 ***/
+/* Relaxation factor used for updating flow changes */                         //(2.00.11 - LR)
+double RelaxFactor;                                                            //(2.00.11 - LR)
+
+/* Function to find flow coeffs. through open/closed valves */                 //(2.00.11 - LR)
+void valvecoeff(int k);                                                        //(2.00.11 - LR)
 
 
 int  openhyd()
@@ -129,9 +126,8 @@ void inithyd(int initflag)
       OldStat[Nlinks+i] = TEMPCLOSED;
    }
 
-
    /* Initialize emitter flows */
-   memset(E,0,(Nnodes+1)*sizeof(float));
+   memset(E,0,(Nnodes+1)*sizeof(double));
    for (i=1; i<=Njuncs; i++)
       if (Node[i].Ke > 0.0) E[i] = 1.0;
 
@@ -142,11 +138,12 @@ void inithyd(int initflag)
       S[i] = Link[i].Stat;
       K[i] = Link[i].Kc;
 
-      /* Start active PRVs & PSVs in OPEN position */
+      /* Start active control valves in ACTIVE position */                     //(2.00.11 - LR)
       if (
-           (Link[i].Type == PRV || Link[i].Type == PSV || Link[i].Type == FCV)
+           (Link[i].Type == PRV || Link[i].Type == PSV
+            || Link[i].Type == FCV)                                            //(2.00.11 - LR)
             && (Link[i].Kc != MISSING)
-         ) S[i] = OPEN;
+         ) S[i] = ACTIVE;                                                      //(2.00.11 - LR)
 
 /*** Updated 3/1/01 ***/
       /* Initialize flows if necessary */
@@ -188,7 +185,7 @@ int   runhyd(long *t)
 {
    int   iter;                          /* Iteration count   */
    int   errcode;                       /* Error code        */
-   float relerr;                        /* Solution accuracy */
+   double relerr;                        /* Solution accuracy */
 
    /* Find new demands & control actions */
    *t = Htime;
@@ -237,15 +234,7 @@ int  nexthyd(long *tstep)
    /* Compute next time step & update tank levels */
    *tstep = 0;
    hydstep = 0;
-   if (Htime < Dur)
-   {                                                                           /*** Changed 1/24/07 ***/
-      if (Igrateflag == MODIFIED)                                              /*** Changed 1/24/07 ***/
-      {                                                                        /*** Changed 1/24/07 ***/
-         errcode = modEuler(Hstep);                                            /*** Changed 1/24/07 ***/
-         if ( errcode ) return errcode;                                        /*** Changed 1/24/07 ***/
-      }                                                                        /*** Changed 1/24/07 ***/  
-      hydstep = timestep();                                                    /*** Changed 1/24/07 ***/
-   }                                                                           /*** Changed 1/24/07 ***/
+   if (Htime < Dur) hydstep = timestep();
    if (Saveflag) errcode = savehydstep(&hydstep);
 
    /* Compute pumping energy */
@@ -265,53 +254,7 @@ int  nexthyd(long *tstep)
    *tstep = hydstep;
    return(errcode);
 }
-
-/*********************************** Added 1/24/07 ************************** */
-int  modEuler(long tstep)
-/*
-**--------------------------------------------------------------
-**  Input:   tstep = time step (in seconds)     
-**  Output:  none
-**  Purpose: applies modified Euler integration over a time step
-**           to update tank levels 
-**--------------------------------------------------------------
-*/
-{
-   int   i, iter, n, errcode = 0;
-   float relerr;
-   char  tmpflag;
-
-   /* === Save current tank data ==========================================*/
-   for (i=1; i<=Ntanks; i++)
-   {
-      tankV[i] = Tank[i].V;
-      n = Tank[i].Node;
-      tankQ[i] = D[n];
-      tankH[i] = H[n];
-   }
-
-   /* === Project tank levels over 1/2 a normal time step =================*/
-   tanklevels(tstep/2);
-
-   /* === Re-solve network with updated tank levels but current demands ===*/
-   tmpflag = Statflag;
-   Statflag = FALSE;
-   errcode = netsolve(&iter,&relerr);
-   Statflag = tmpflag;
-   if (errcode == 0)
-   {
-   
-      /* === New tank inflow is average of old and new values =============*/
-      for (i=1; i<=Ntanks; i++)
-      {
-         Tank[i].V = tankV[i];
-         n = Tank[i].Node;
-         H[n] = tankH[i];
-         if (Tank[i].A > 0.0) D[n] = (tankQ[i] + D[n])/2.;
-      }
-   }
-   return errcode;
-}                               /* End of modEuler */
+  
 
 void  closehyd()
 /*
@@ -337,13 +280,13 @@ int  allocmatrix()
 */
 {
    int errcode = 0;
-   Aii = (REAL *) calloc(Nnodes+1,sizeof(REAL));
-   Aij = (REAL *) calloc(Ncoeffs+1,sizeof(REAL));
-   F   = (REAL *) calloc(Nnodes+1,sizeof(REAL));
-   E   = (float *) calloc(Nnodes+1,sizeof(float));
-   P   = (float *) calloc(Nlinks+1,sizeof(float));
-   Y   = (float *) calloc(Nlinks+1,sizeof(float));
-   X   = (float *) calloc(MAX((Nnodes+1),(Nlinks+1)),sizeof(float));
+   Aii = (double *) calloc(Nnodes+1,sizeof(double));
+   Aij = (double *) calloc(Ncoeffs+1,sizeof(double));
+   F   = (double *) calloc(Nnodes+1,sizeof(double));
+   E   = (double *) calloc(Nnodes+1,sizeof(double));
+   P   = (double *) calloc(Nlinks+1,sizeof(double));
+   Y   = (double *) calloc(Nlinks+1,sizeof(double));
+   X   = (double *) calloc(MAX((Nnodes+1),(Nlinks+1)),sizeof(double));
    OldStat = (char *) calloc(Nlinks+Ntanks+1, sizeof(char));
    ERRCODE(MEMCHECK(Aii));
    ERRCODE(MEMCHECK(Aij));
@@ -353,17 +296,6 @@ int  allocmatrix()
    ERRCODE(MEMCHECK(Y));
    ERRCODE(MEMCHECK(X));
    ERRCODE(MEMCHECK(OldStat));
-
-   if ( Igrateflag == MODIFIED )                                               /*** Added 1/24/07 ***/
-   {                                                                           /*** Added 1/24/07 ***/
-       tankV = (float *) calloc(Ntanks+1, sizeof(float));                      /*** Added 1/24/07 ***/
-       tankQ = (float *) calloc(Ntanks+1, sizeof(float));                      /*** Added 1/24/07 ***/
-       tankH = (REAL *)  calloc(Ntanks+1, sizeof(REAL));                       /*** Added 1/24/07 ***/
-       ERRCODE(MEMCHECK(tankV));                                               /*** Added 1/24/07 ***/
-       ERRCODE(MEMCHECK(tankQ));                                               /*** Added 1/24/07 ***/
-       ERRCODE(MEMCHECK(tankH));                                               /*** Added 1/24/07 ***/
-   }                                                                           /*** Added 1/24/07 ***/
-
    return(errcode);
 }                               /* end of allocmatrix */
 
@@ -385,17 +317,10 @@ void  freematrix()
    free(Y);
    free(X);
    free(OldStat);
-
-   if ( Igrateflag == MODIFIED )                                               /*** Added 1/24/07 ***/
-   {                                                                           /*** Added 1/24/07 ***/
-       free(tankV);                                                            /*** Added 1/24/07 ***/
-       free(tankQ);                                                            /*** Added 1/24/07 ***/
-       free(tankH);                                                            /*** Added 1/24/07 ***/ 
-   }                                                                           /*** Added 1/24/07 ***/
 }                               /* end of freematrix */
 
 
-void  initlinkflow(int i, char s, float k)
+void  initlinkflow(int i, char s, double k)
 /*
 **--------------------------------------------------------------------
 **  Input:   i = link index
@@ -415,7 +340,7 @@ void  initlinkflow(int i, char s, float k)
 
 
 /*** Updated 9/7/00 ***/
-void  setlinkflow(int k, float dh)
+void  setlinkflow(int k, double dh)
 /*
 **--------------------------------------------------------------
 **  Input:   k = link index
@@ -426,8 +351,8 @@ void  setlinkflow(int k, float dh)
 */
 {
    int   i,p;
-   float h0;
-   REAL  x,y;
+   double h0;
+   double  x,y;
 
    switch (Link[k].Type)
    {
@@ -485,7 +410,7 @@ void  setlinkflow(int k, float dh)
 }
 
 
-void  setlinkstatus(int index, char value, char *s, float *k)
+void  setlinkstatus(int index, char value, char *s, double *k)
 /*----------------------------------------------------------------
 **  Input:   index  = link index
 **           value  = 0 (CLOSED) or 1 (OPEN)
@@ -507,7 +432,7 @@ void  setlinkstatus(int index, char value, char *s, float *k)
       &&  Link[index].Type != GPV) *k = MISSING;
 
       /* Reset link flow if it was originally closed */
-      if (*s <= CLOSED) initlinkflow(index, OPEN, *k);
+//      if (*s <= CLOSED) initlinkflow(index, OPEN, *k);
       *s = OPEN;
    }
 
@@ -522,13 +447,13 @@ void  setlinkstatus(int index, char value, char *s, float *k)
       &&  Link[index].Type != GPV) *k = MISSING;
       
       /* Reset link flow if it was originally open */
-      if (*s > CLOSED) initlinkflow(index, CLOSED, *k);
+//      if (*s > CLOSED) initlinkflow(index, CLOSED, *k);
       *s = CLOSED;
    }
 }
 
 
-void  setlinksetting(int index, float value, char *s, float *k)
+void  setlinksetting(int index, double value, char *s, double *k)
 /*----------------------------------------------------------------
 **  Input:   index  = link index
 **           value  = pump speed or valve setting
@@ -547,12 +472,12 @@ void  setlinksetting(int index, float value, char *s, float *k)
       if (value > 0 && *s <= CLOSED)
       {
          *s = OPEN;
-         initlinkflow(index, OPEN, value);
+//         initlinkflow(index, OPEN, value);
       }
       if (value == 0 && *s > CLOSED)
       {
           *s = CLOSED;
-          initlinkflow(index, CLOSED, value);
+//          initlinkflow(index, CLOSED, value);
       }
    }
 
@@ -560,7 +485,7 @@ void  setlinksetting(int index, float value, char *s, float *k)
    /* For FCV, activate it */
    else if (Link[index].Type == FCV)
    {
-      if (*s <= CLOSED) initlinkflow(index, OPEN, value);
+//      if (*s <= CLOSED) initlinkflow(index, OPEN, value);
       *k = value;
       *s = ACTIVE;
    }
@@ -570,7 +495,7 @@ void  setlinksetting(int index, float value, char *s, float *k)
    {
       if (*k == MISSING && *s <= CLOSED)
       {
-         initlinkflow(index, OPEN, value);
+//         initlinkflow(index, OPEN, value);
          *s = OPEN;
       }
       *k = value;
@@ -587,12 +512,9 @@ void  resistance(int k)
 **--------------------------------------------------------------------
 */
 {
-   float e,d,L;
+   double e,d,L;
    Link[k].R = CSMALL;
-
-/*** Updated 5/10/06 ***/ 
-//   if (Link[k].Type == PIPE || Link[k].Type == CV)
-
+   //if (Link[k].Type == PIPE || Link[k].Type == CV)                           //(2.00.11 - LR)
    switch (Link[k].Type)
    {
 
@@ -617,17 +539,23 @@ void  resistance(int k)
 
    /* Link is a pump. Use negligible resistance. */
       case PUMP:
-         Link[k].R = CSMALL;
+         Link[k].R = CBIG;  //CSMALL;
          break;
+
 
    /* Link is a valve. Compute resistance for open valve assuming  */
    /* length is 2*diameter and friction factor is 0.02. Use with   */
    /* other formulas as well since resistance should be negligible.*/
+
+/*** This way of treating valve resistance has been deprecated  ***/           //(2.00.11 - LR)
+/*** since resulting resistance is not always negligible.       ***/           //(2.00.11 - LR)
+/*
       default:
          d = Link[k].Diam;
          L = 2.0*d;
          Link[k].R = 0.02*L/2.0/32.2/d/SQR(PI*SQR(d)/4.0);
          break;
+*/
    }
 }
 
@@ -643,19 +571,11 @@ void  demands()
 {
    int i,j,n;
    long k,p;
-   float djunc, sum;
-   float adjustor = 1.0f;                                                      /*** Added 12/13/06 ***/
+   double djunc, sum;
    Pdemand demand;
 
    /* Determine total elapsed number of pattern periods */
    p = (Htime+Pstart)/Pstep;
-
-   /* Determine demand adjustor */                                             /*** Added 12/13/06 ***/
-   if (AdjustPat > 0)                                                          /*** Added 12/13/06 ***/
-   {                                                                           /*** Added 12/13/06 ***/
-      k = p % (long) Pattern[AdjustPat].Length;                                /*** Added 12/13/06 ***/
-      adjustor = Pattern[AdjustPat].F[k];                                      /*** Added 12/13/06 ***/
-   }                                                                           /*** Added 12/13/06 ***/
 
    /* Update demand at each node according to its assigned pattern */
    Dsystem = 0.0;          /* System-wide demand */
@@ -674,7 +594,7 @@ void  demands()
          if (djunc > 0.0) Dsystem += djunc;
          sum += djunc;
       }
-      D[i] = sum * adjustor;                                                   /*** Modified 12/13/06 ***/
+      D[i] = sum;
    }
 
    /* Update head at fixed grade nodes with time patterns. */
@@ -716,9 +636,9 @@ int  controls()
 */
 {
    int   i, k, n, reset, setsum;
-   float h, vplus;
-   float v1, v2;
-   float k1, k2;
+   double h, vplus;
+   double v1, v2;
+   double k1, k2;
    char  s1, s2;
 
    /* Examine each control statement */
@@ -768,7 +688,7 @@ int  controls()
             S[k] = s2;
             K[k] = k2;
             if (Statflag) writecontrolaction(k,i);
-            if (s1 != s2) initlinkflow(k, S[k], K[k]);
+ //           if (s1 != s2) initlinkflow(k, S[k], K[k]);
             setsum++;
          }
       }   
@@ -824,7 +744,7 @@ void  tanktimestep(long *tstep)
 */
 {
    int    i,n;   
-   float  h,q,v;
+   double  h,q,v;
    long   t;
 
    /* (D[n] is net flow rate into (+) or out of (-) tank at node n) */
@@ -861,7 +781,7 @@ void  controltimestep(long *tstep)
 */
 {
    int   i,j,k,n;
-   float h,q,v;
+   double h,q,v;
    long  t,t1,t2;
 
    for (i=1; i<=Ncontrols; i++)
@@ -993,7 +913,7 @@ void  addenergy(long hstep)
 {
     int   i,j,k;
     long  m,n;
-    float c0,c,             /* Energy cost (cost/kwh) */
+    double c0,c,             /* Energy cost (cost/kwh) */
           f0,               /* Energy cost factor */
           dt,               /* Time interval (hr) */
           e,                /* Pump efficiency (fraction) */
@@ -1003,7 +923,7 @@ void  addenergy(long hstep)
 
    /* Determine current time interval in hours */
    if      (Dur == 0)    dt = 1.0;
-   else if (Htime < Dur) dt = (float) hstep / 3600.0;
+   else if (Htime < Dur) dt = (double) hstep / 3600.0;
    else                  dt = 0.0;
    if      (dt == 0.0)   return;
    n = (Htime+Pstart)/Pstep;
@@ -1054,7 +974,7 @@ void  addenergy(long hstep)
 }                       /* End of pumpenergy */
 
 
-void  getenergy(int k, float *kw, float *eff)
+void  getenergy(int k, double *kw, double *eff)
 /*
 **----------------------------------------------------------------
 **  Input:   k    = link index                         
@@ -1065,7 +985,7 @@ void  getenergy(int k, float *kw, float *eff)
 */
 {
    int   i,j;
-   float dh, q, e;
+   double dh, q, e;
 
 /*** Updated 6/24/02 ***/
    /* No energy if link is closed */
@@ -1111,7 +1031,7 @@ void  tanklevels(long tstep)
 */
 {
    int   i,n;
-   float dv;
+   double dv;
 
    for (i=1; i<=Ntanks; i++)
    {
@@ -1134,7 +1054,7 @@ void  tanklevels(long tstep)
 }                       /* End of tanklevels */
 
 
-float  tankvolume(int i, float h)
+double  tankvolume(int i, double h)
 /*
 **--------------------------------------------------------------------
 **  Input:   i = tank index                                         
@@ -1158,7 +1078,7 @@ float  tankvolume(int i, float h)
 }                       /* End of tankvolume */
 
 
-float  tankgrade(int i, float v)
+double  tankgrade(int i, double v)
 /*
 **-------------------------------------------------------------------
 **  Input:   i = tank index                                         
@@ -1183,7 +1103,7 @@ float  tankgrade(int i, float v)
 }                        /* End of tankgrade */
 
 
-int  netsolve(int *iter, float *relerr)
+int  netsolve(int *iter, double *relerr)
 /*
 **-------------------------------------------------------------------
 **  Input:   none                                                
@@ -1193,35 +1113,35 @@ int  netsolve(int *iter, float *relerr)
 **  Purpose: solves network nodal equations for heads and flows    
 **           using Todini's Gradient algorithm                   
 **
-*** Updated 9/7/00 ***                                                             
-**  Notes:   Status checks on PRVs and PSVs made every iteration.
-**           Checks on other valves, pumps, and pipes to tanks     
-**           are made every CheckFreq iteration, up until        
-**           MaxCheck iterations are reached. After this, a       
-**           status check is made when convergence is achieved.     
-**           If convergence acheived but status changes, then    
-**           at least two more iterations are required before    
-**           solution is reached, even if system converges.
-**           If convergence not achieved in MaxIter and ExtraIter
-**           > 0 then another ExtraIter trials are made with no
-**           status changes made to any links.
+*** Updated 9/7/00 *** 
+*** Updated 2.00.11 ***                                                            
+**  Notes:   Status checks on CVs, pumps and pipes to tanks are made
+**           every CheckFreq iteration, up until MaxCheck iterations
+**           are reached. Status checks on control valves are made
+**           when within a factor of 10 of convergence. Also at this
+**           point, future computed flow changes are only 60% of
+**           their full value. A complete status check on all links
+**           is made when convergence is achieved. If convergence is
+**           not achieved in MaxIter trials and ExtraIter > 0 then
+**           another ExtraIter trials are made with no status changes
+**           made to any links and a warning message is generated.
 **                                                             
 **   This procedure calls linsolve() which appears in SMATRIX.C. 
 **-------------------------------------------------------------------
 */
 {
-   int   i;                     /* Node index */
-   int   errcode;               /* Node causing solution error */
-   int   nextcheck;             /* Next status check trial */
-   int   concheck = 1;          /* Convergence checking flag */
-   int   maxtrials;             /* Max. trials for convergence */
-   REAL  newerr;                /* New convergence error */
+   int    i;                     /* Node index */
+   int    errcode = 0;           /* Node causing solution error */
+   int    nextcheck;             /* Next status check trial */
+   int    maxtrials;             /* Max. trials for convergence */
+   double newerr;                /* New convergence error */
+   double hacc10 = 10.0*Hacc;    /* Relaxed convergence criterion */
+   int    valveChange;           /* Valve status change flag */
+   int    statChange;
 
-/*** Updated 9/7/00 ***/
-   int   valvechange;           /* Valve status change flag */
-
-/*** Updated 9/7/00 ***/
+   /* Initialize status checking & relaxation factor */   
    nextcheck = CheckFreq;
+   RelaxFactor = 1.0;
   
    /* Repeat iterations until convergence or trial limit is exceeded. */
    /* (ExtraIter used to increase trials in case of status cycling.)  */
@@ -1259,36 +1179,40 @@ int  netsolve(int *iter, float *relerr)
       /* Write convergence error to status report if called for */
       if (Statflag == FULL) writerelerr(*iter,*relerr);
 
-/*** Updated 9/7/00 ***/
-      /* Check if a PRV or PSV changes status */
-      valvechange = valvestatus();
+      /* Apply relaxation & check valve status if close to convergence */
 
-      /* Check for convergence (concheck equals 0 if previous iteration */
-      /* converged but there was a status change somewhere).            */
-      if (concheck == 0) concheck = 1;
-      else if (*relerr <= Hacc)
+      if ( *relerr <= hacc10)
+      {
+         RelaxFactor = 0.6;
+         valveChange = valvestatus();
+      }
+      else
+      {
+          RelaxFactor = 1.0;
+          valveChange = FALSE;
+      }
+
+      /* Check for convergence */
+      if (*relerr <= Hacc)
       {
          /* We have convergence. Quit if we are into extra iterations. */
          if (*iter > MaxIter) break;
 
-/*** Updated 9/7/00 ***/
          /* Quit if no status changes occur. */
-         if (!valvechange
-         &&  !linkstatus() 
-         &&  !pswitch()) break;
+         statChange = FALSE;
+         if (valveChange)  statChange = TRUE;
+         if (linkstatus()) statChange = TRUE;
+         if (pswitch())    statChange = TRUE;
+         if (!statChange)  break;
 
-        /* We have a status change so force another iteration. */
-         concheck = 0;
+         /* We have a status change so continue the iterations */
          nextcheck = *iter + CheckFreq;
       }
 
-      /* See if its time for a periodic status check; update iteration count. */
-      if (*iter <= MaxCheck && *iter == nextcheck)
+      /* No convergence yet. See if its time for a periodic status */
+      /* check  on pumps, CV's, and pipes connected to tanks.      */
+      else if (*iter <= MaxCheck && *iter == nextcheck)
       {
-
-/*** Updated 9/7/00 **/
-         /*valvestatus();*/
-
          linkstatus();
          nextcheck += CheckFreq;
       }
@@ -1357,9 +1281,9 @@ int  valvestatus()
 /*
 **-----------------------------------------------------------------
 **  Input:   none                                                
-**  Output:  returns 1 if any pressure control valve changes status,
-**           0 otherwise  
-**  Purpose: updates status for PRVs & PSVs whose status
+**  Output:  returns 1 if any pressure or flow control valve                   //(2.00.11 - LR)
+**           changes status, 0 otherwise                                       //(2.00.11 - LR) 
+**  Purpose: updates status for PRVs, PSVs & FCVs whose status                 //(2.00.11 - LR)
 **           is not fixed to OPEN/CLOSED
 **-----------------------------------------------------------------
 */
@@ -1368,7 +1292,7 @@ int  valvestatus()
          i,k,                       /* Valve & link indexes    */
          n1,n2;                     /* Start & end nodes       */
    char  s;                         /* Valve status settings   */
-   float hset;                      /* Valve head setting      */
+   double hset;                     /* Valve head setting      */
 
    for (i=1; i<=Nvalves; i++)                   /* Examine each valve   */
    {
@@ -1377,8 +1301,10 @@ int  valvestatus()
       n1 = Link[k].N1;                          /* Start & end nodes    */
       n2 = Link[k].N2;
       s  = S[k];                                /* Save current status  */
-      if (s != CLOSED                           /* No change if flow is */
-      && ABS(Q[k]) < Qtol) continue;            /* negligible.          */
+
+//      if (s != CLOSED                           /* No change if flow is */  //(2.00.11 - LR)
+//      && ABS(Q[k]) < Qtol) continue;            /* negligible.          */  //(2.00.11 - LR)
+
       switch (Link[k].Type)                     /* Evaluate new status: */
       {
          case PRV:  hset = Node[n2].El + K[k];
@@ -1387,6 +1313,10 @@ int  valvestatus()
          case PSV:  hset = Node[n1].El + K[k];
                     S[k] = psvstatus(k,s,hset,H[n1],H[n2]);
                     break;
+
+         case FCV:  S[k] = fcvstatus(k,s,H[n1],H[n2]);                         //(2.00.11 - LR)
+                    break;                                                     //(2.00.11 - LR)
+
          default:   continue;
       }
 
@@ -1411,7 +1341,7 @@ int  linkstatus()
 **--------------------------------------------------------------
 **  Input:   none                                                
 **  Output:  returns 1 if any link changes status, 0 otherwise   
-**  Purpose: determines new status for pumps, CVs, FCVs & pipes
+**  Purpose: determines new status for pumps, CVs, & pipes                     //(2.00.11 - LR)
 **           to tanks.                                              
 **--------------------------------------------------------------
 */
@@ -1420,7 +1350,7 @@ int  linkstatus()
          k,                          /* Link index              */
          n1,                         /* Start node index        */
          n2;                         /* End node index          */
-   float dh;                         /* Head difference         */
+   double dh;                        /* Head difference         */
    char  status;                     /* Current status          */
 
    /* Examine each link */
@@ -1436,30 +1366,31 @@ int  linkstatus()
 
       /* Check for status changes in CVs and pumps */
       if (Link[k].Type == CV) S[k] = cvstatus(S[k],dh,Q[k]);
-      if (Link[k].Type == PUMP && S[k] >= OPEN)
+      if (Link[k].Type == PUMP && S[k] >= OPEN && K[k] > 0.0)                  //(2.00.11 - LR)
          S[k] = pumpstatus(k,-dh);
 
       /* Check for status changes in non-fixed FCVs */
-      if (Link[k].Type == FCV && K[k] != MISSING)
-         S[k] = fcvstatus(k,status,H[n1],H[n2]);
+      //if (Link[k].Type == FCV && K[k] != MISSING)                            //(2.00.11 - LR)
+      //   S[k] = fcvstatus(k,status,H[n1],H[n2]);                             //(2.00.11 - LR)
 
       /* Check for flow into (out of) full (empty) tanks */
       if (n1 > Njuncs || n2 > Njuncs) tankstatus(k,n1,n2);
 
-      /* Note change in link status and revise link flow */ 
+      /* Note change in link status; do not revise link flow */                //(2.00.11 - LR)
       if (status != S[k])
       {
          change = TRUE;
-         if (Statflag == FULL) writestatchange(k,status,S[k]); 
-         if (S[k] <= CLOSED) Q[k] = QZERO;
-         else setlinkflow(k, dh);
+         if (Statflag == FULL) writestatchange(k,status,S[k]);
+ 
+         //if (S[k] <= CLOSED) Q[k] = QZERO;                                   //(2.00.11 - LR)
+         //else setlinkflow(k, dh);                                            //(2.00.11 - LR)
       }
    }
    return(change);
 }                        /* End of linkstatus */
 
 
-char  cvstatus(char s, float dh, float q)
+char  cvstatus(char s, double dh, double q)
 /*
 **--------------------------------------------------
 **  Input:   s  = current status
@@ -1485,18 +1416,18 @@ char  cvstatus(char s, float dh, float q)
 }
 
 
-char  pumpstatus(int k, float dh)
+char  pumpstatus(int k, double dh)
 /*
 **--------------------------------------------------
 **  Input:   k  = link index                         
 **           dh = head gain
 **  Output:  returns new pump status                 
-**  Purpose: updates status of a pump.               
+**  Purpose: updates status of an open pump.               
 **--------------------------------------------------
 */
 {
    int   p;
-   float hmax;
+   double hmax;
 
    /* Prevent reverse flow through pump */
    p = PUMPINDEX(k);
@@ -1504,13 +1435,14 @@ char  pumpstatus(int k, float dh)
    else hmax = SQR(K[k])*Pump[p].Hmax;
    if (dh > hmax + Htol) return(XHEAD);
 
-   /* Check if pump cannot deliver flow */
-   if (Q[k] > K[k]*Pump[p].Qmax + Qtol) return(XFLOW);
+/*** Flow higher than pump curve no longer results in a status change ***/     //(2.00.11 - LR)
+   /* Check if pump cannot deliver flow */                                     //(2.00.11 - LR)
+   //if (Q[k] > K[k]*Pump[p].Qmax + Qtol) return(XFLOW);                       //(2.00.11 - LR)
    return(OPEN);
 }
 
 
-char  prvstatus(int k, char s, float hset, float h1, float h2)
+char  prvstatus(int k, char s, double hset, double h1, double h2)
 /*
 **-----------------------------------------------------------
 **  Input:   k    = link index                                
@@ -1524,28 +1456,32 @@ char  prvstatus(int k, char s, float hset, float h1, float h2)
 */
 {
    char  status;     /* New valve status */
-   float hml;        /* Minor headloss   */
+   double hml;        /* Minor headloss   */
+   double htol = Htol;
 
    status = s;
    if (K[k] == MISSING) return(status);       /* Status fixed by user */
    hml = Link[k].Km*SQR(Q[k]);                /* Head loss when open  */
+
+/*** Status rules below have changed. ***/                                     //(2.00.11 - LR)
+
    switch (s)
    {
       case ACTIVE:
          if (Q[k] < -Qtol)            status = CLOSED;
-         else if (h1 < hset+hml-Htol) status = OPEN;
+         else if (h1-hml < hset-htol) status = OPEN;                           //(2.00.11 - LR)
          else                         status = ACTIVE;
          break;
       case OPEN:
          if (Q[k] < -Qtol)            status = CLOSED;
-         else if (h1 > hset+hml+Htol) status = ACTIVE;
+         else if (h2 >= hset+htol)    status = ACTIVE;                         //(2.00.11 - LR)
          else                         status = OPEN;
          break;
       case CLOSED:
-         if (h1 > h2+Htol
-         &&  h1 < hset-Htol)          status = OPEN;
-         else if (h1 > h2+Htol
-              &&  h2 < hset-Htol)     status = ACTIVE;
+         if ( h1 >= hset+htol                                                  //(2.00.11 - LR)
+           && h2 < hset-htol)         status = ACTIVE;                         //(2.00.11 - LR)
+         else if (h1 < hset-htol                                               //(2.00.11 - LR)
+               && h1 > h2+htol)       status = OPEN;                           //(2.00.11 - LR)
          else                         status = CLOSED;
          break;
       case XPRESSURE:
@@ -1556,7 +1492,7 @@ char  prvstatus(int k, char s, float hset, float h1, float h2)
 }
 
 
-char  psvstatus(int k, char s, float hset, float h1, float h2)
+char  psvstatus(int k, char s, double hset, double h1, double h2)
 /*
 **-----------------------------------------------------------
 **  Input:   k    = link index                                
@@ -1570,28 +1506,32 @@ char  psvstatus(int k, char s, float hset, float h1, float h2)
 */
 {
    char  status;       /* New valve status */
-   float hml;          /* Minor headloss   */
+   double hml;          /* Minor headloss   */
+   double htol = Htol;
 
    status = s;
    if (K[k] == MISSING) return(status);       /* Status fixed by user */
    hml = Link[k].Km*SQR(Q[k]);                /* Head loss when open  */
+
+/*** Status rules below have changed. ***/                                     //(2.00.11 - LR)
+
    switch (s)
    {
       case ACTIVE:
          if (Q[k] < -Qtol)            status = CLOSED;
-         else if (h2+hml > hset+Htol) status = OPEN;
+         else if (h2+hml > hset+htol) status = OPEN;                           //(2.00.11 - LR)
          else                         status = ACTIVE;
          break;
       case OPEN:
          if (Q[k] < -Qtol)            status = CLOSED;
-         else if (h2+hml < hset-Htol) status = ACTIVE;
+         else if (h1 < hset-htol)     status = ACTIVE;                         //(2.00.11 - LR)
          else                         status = OPEN;
          break;
       case CLOSED:
-         if (h1 > h2+Htol
-         &&  h2 > hset+Htol)          status = OPEN;
-         else if (h1 > h2+Htol
-         &&  h1 > hset+Htol)          status = ACTIVE;
+         if (h2 > hset+htol                                                    //(2.00.11 - LR)
+          && h1 > h2+htol)            status = OPEN;                           //(2.00.11 - LR)
+         else if (h1 >= hset+htol                                              //(2.00.11 - LR)
+               && h1 > h2+htol)       status = ACTIVE;                         //(2.00.11 - LR)
          else                         status = CLOSED;
          break;
       case XPRESSURE:
@@ -1602,7 +1542,7 @@ char  psvstatus(int k, char s, float hset, float h1, float h2)
 }
 
 
-char  fcvstatus(int k, char s, float h1, float h2)
+char  fcvstatus(int k, char s, double h1, double h2)
 /*
 **-----------------------------------------------------------
 **  Input:   k    = link index                                
@@ -1624,6 +1564,7 @@ char  fcvstatus(int k, char s, float h1, float h2)
    char  status;        /* New valve status */
    status = s;
    if (h1 - h2 < -Htol)                status = XFCV;
+   else if ( Q[k] < -Qtol )            status = XFCV;                          //(2.00.11 - LR)
    else if (s == XFCV && Q[k] >= K[k]) status = ACTIVE;
    return(status);
 }
@@ -1643,7 +1584,7 @@ void  tankstatus(int k, int n1, int n2)
 */
 {
    int   i,n;
-   float h,q;
+   double h,q;
 
    /* Make node n1 be the tank */
    q = Q[k];
@@ -1758,7 +1699,7 @@ int  pswitch()
             if (Statflag == FULL) writestatchange(k,s,S[k]); 
 
             /* Re-set flow if status has changed */
-            if (S[k] != s) initlinkflow(k, S[k], K[k]);
+//            if (S[k] != s) initlinkflow(k, S[k], K[k]);
             anychange = 1;
          }
       }
@@ -1767,7 +1708,7 @@ int  pswitch()
 }                        /* End of pswitch */
 
 
-REAL newflows()
+double newflows()
 /*
 **----------------------------------------------------------------
 **  Input:   none                                                
@@ -1776,10 +1717,10 @@ REAL newflows()
 **----------------------------------------------------------------
 */
 {
-   REAL  dh,                    /* Link head loss       */
-         dq;                    /* Link flow change     */
-   REAL  dqsum,                 /* Network flow change  */
-         qsum;                  /* Network total flow   */
+   double  dh,                    /* Link head loss       */
+           dq;                    /* Link flow change     */
+   double  dqsum,                 /* Network flow change  */
+           qsum;                  /* Network total flow   */
    int   k, n, n1, n2;
 
    /* Initialize net inflows (i.e., demands) at tanks */
@@ -1806,12 +1747,15 @@ REAL newflows()
       dh = H[n1] - H[n2];
       dq = Y[k] - P[k]*dh;
 
+      /* Adjust flow change by the relaxation factor */                        //(2.00.11 - LR)
+      dq *= RelaxFactor;                                                       //(2.00.11 - LR)
+
       /* Prevent flow in constant HP pumps from going negative */
       if (Link[k].Type == PUMP)
       {
          n = PUMPINDEX(k);
          if (Pump[n].Ptype == CONST_HP && dq > Q[k]) dq = Q[k]/2.0;
-      }   
+      }
       Q[k] -= dq;
 
       /* Update sum of absolute flows & flow corrections */
@@ -1850,12 +1794,12 @@ void   newcoeffs()
 **--------------------------------------------------------------
 */
 {
-   memset(Aii,0,(Nnodes+1)*sizeof(REAL));   /* Reset coeffs. to 0 */
-   memset(Aij,0,(Ncoeffs+1)*sizeof(REAL));
-   memset(F,0,(Nnodes+1)*sizeof(REAL));
-   memset(X,0,(Nnodes+1)*sizeof(float));
-   memset(P,0,(Nlinks+1)*sizeof(float));
-   memset(Y,0,(Nlinks+1)*sizeof(float));
+   memset(Aii,0,(Nnodes+1)*sizeof(double));   /* Reset coeffs. to 0 */
+   memset(Aij,0,(Ncoeffs+1)*sizeof(double));
+   memset(F,0,(Nnodes+1)*sizeof(double));
+   memset(X,0,(Nnodes+1)*sizeof(double));
+   memset(P,0,(Nlinks+1)*sizeof(double));
+   memset(Y,0,(Nlinks+1)*sizeof(double));
    linkcoeffs();                            /* Compute link coeffs.  */
    emittercoeffs();                         /* Compute emitter coeffs.*/
    nodecoeffs();                            /* Compute node coeffs.  */
@@ -1897,7 +1841,7 @@ void  linkcoeffs()
          case PRV:
          case PSV:   /* If valve status fixed then treat as pipe */
                      /* otherwise ignore the valve for now. */
-                     if (K[k] == MISSING) pipecoeff(k);    
+                     if (K[k] == MISSING) valvecoeff(k);  //pipecoeff(k);      //(2.00.11 - LR)    
                      else continue;
                      break;
          default:    continue;                  
@@ -1990,11 +1934,11 @@ void  emittercoeffs()
 */
 {
    int   i;
-   REAL  ke;
-   REAL  p;
-   REAL  q;
-   REAL  y;
-   REAL  z;
+   double  ke;
+   double  p;
+   double  q;
+   double  y;
+   double  z;
    for (i=1; i<=Njuncs; i++)
    {
       if (Node[i].Ke == 0.0) continue;
@@ -2012,7 +1956,7 @@ void  emittercoeffs()
 }
 
 
-REAL  emitflowchange(int i)
+double  emitflowchange(int i)
 /*
 **--------------------------------------------------------------
 **   Input:   i = node index
@@ -2021,7 +1965,7 @@ REAL  emitflowchange(int i)
 **--------------------------------------------------------------
 */
 {
-   REAL ke, p;
+   double ke, p;
    ke = MAX(CSMALL, Node[i].Ke);
    p = Qexp*ke*pow(ABS(E[i]),(Qexp-1.0));
    if (p < RQtol)
@@ -2044,7 +1988,7 @@ void  pipecoeff(int k)
 **--------------------------------------------------------------
 */
 {
-   REAL  hpipe,     /* Normal head loss          */
+   double  hpipe,     /* Normal head loss          */
          hml,       /* Minor head loss           */
          ml,        /* Minor loss coeff.         */
          p,         /* q*(dh/dq)                 */
@@ -2105,7 +2049,7 @@ void  pipecoeff(int k)
 }                        /* End of pipecoeff */
 
 
-REAL DWcoeff(int k, REAL *dfdq)
+double DWcoeff(int k, double *dfdq)
 /*
 **--------------------------------------------------------------
 **   Input:   k = link index                                      
@@ -2119,12 +2063,12 @@ REAL DWcoeff(int k, REAL *dfdq)
 **--------------------------------------------------------------
 */
 {
-   REAL q,             /* Abs. value of flow */
-        f;             /* Friction factor    */
-   REAL x1,x2,x3,x4,
-        y1,y2,y3,
-        fa,fb,r;
-   REAL s,w;
+   double q,             /* Abs. value of flow */
+          f;             /* Friction factor    */
+   double x1,x2,x3,x4,
+          y1,y2,y3,
+          fa,fb,r;
+   double s,w;
 
    *dfdq = 0.0;
    if (Link[k].Type > PIPE) return(1.0); /* Only apply to pipes */
@@ -2179,7 +2123,7 @@ void  pumpcoeff(int k)
 */
 {
    int   p;         /* Pump index             */
-   float h0,        /* Shutoff head           */
+   double h0,       /* Shutoff head           */
          q,         /* Abs. value of flow     */
          r,         /* Flow resistance coeff. */
          n;         /* Flow exponent coeff.   */
@@ -2187,7 +2131,9 @@ void  pumpcoeff(int k)
    /* Use high resistance pipe if pump closed or cannot deliver head */
    if (S[k] <= CLOSED || K[k] == 0.0)
    {
-      pipecoeff(k);
+      //pipecoeff(k);                                                          //(2.00.11 - LR)
+      P[k] = 1.0/CBIG;                                                         //(2.00.11 - LR)
+      Y[k] = Q[k];                                                             //(2.00.11 - LR)
       return;
    }
 
@@ -2222,12 +2168,12 @@ void  pumpcoeff(int k)
 
 /*** Updated 10/25/00 ***/
 /*** Updated 12/29/00 ***/
-void  curvecoeff(int i, float q, float *h0, float *r)
+void  curvecoeff(int i, double q, double *h0, double *r)
 /*
 **-------------------------------------------------------------------
 **   Input:   i   = curve index                                        
 **            q   = flow rate
-**   Output:  *h0 = head at zero flow (y-intercept)                    
+**   Output:  *h0  = head at zero flow (y-intercept)                   
 **            *r  = dHead/dFlow (slope)                                
 **   Purpose: computes intercept and slope of head v. flow curve       
 **            at current flow.                                         
@@ -2235,7 +2181,7 @@ void  curvecoeff(int i, float q, float *h0, float *r)
 */
 {
    int   k1, k2, npts;
-   float *x, *y;
+   double *x, *y;
 
    /* Remember that curve is stored in untransformed units */
    q *= Ucf[FLOW];
@@ -2269,13 +2215,13 @@ void  gpvcoeff(int k)
 **--------------------------------------------------------------
 */
 {
-   float h0,        /* Headloss curve intercept */
-         q,         /* Abs. value of flow       */
-         r;         /* Flow resistance coeff.   */
+   double h0,        /* Headloss curve intercept */
+          q,         /* Abs. value of flow       */
+          r;         /* Flow resistance coeff.   */
 
 /*** Updated 9/7/00 ***/
    /* Treat as a pipe if valve closed */
-   if (S[k] == CLOSED) pipecoeff(k);
+   if (S[k] == CLOSED) valvecoeff(k); //pipecoeff(k);                          //(2.00.11 - LR)
 
    /* Otherwise utilize headloss curve   */
    /* whose index is stored in K */
@@ -2287,15 +2233,12 @@ void  gpvcoeff(int k)
 
 /*** Updated 10/25/00 ***/
 /*** Updated 12/29/00 ***/
-      curvecoeff((int)ROUND(K[k]),q,&h0,&r);      
+      curvecoeff((int)ROUND(K[k]),q,&h0,&r);
 
-      /* Compute inverse headloss gradient (P) and flow  */
-      /* correction factor (Y) using formulas for pumps. */
+      /* Compute inverse headloss gradient (P) */
+      /* and flow correction factor (Y).       */
       P[k] = 1.0 / MAX(r,RQtol);
-
-/*** Updated 5/10/06 ***/
-      //Y[k] = Q[k] + P[k]*h0;
-      Y[k] = P[k]*(h0 + r*Q[k]);
+      Y[k] = P[k]*(h0 + r*q)*SGN(Q[k]);                                        //(2.00.11 - LR)
    }
 }
  
@@ -2310,13 +2253,13 @@ void  pbvcoeff(int k)
 */
 {
    /* If valve fixed OPEN or CLOSED then treat as a pipe */
-   if (K[k] == MISSING || K[k] == 0.0) pipecoeff(k);
+   if (K[k] == MISSING || K[k] == 0.0) valvecoeff(k);  //pipecoeff(k);         //(2.00.11 - LR)
 
    /* If valve is active */
    else
    {
       /* Treat as a pipe if minor loss > valve setting */
-      if (Link[k].Km*SQR(Q[k]) > K[k]) pipecoeff(k);
+      if (Link[k].Km*SQR(Q[k]) > K[k]) valvecoeff(k);  //pipecoeff(k);         //(2.00.11 - LR)
 
       /* Otherwise force headloss across valve to be equal to setting */
       else
@@ -2337,7 +2280,7 @@ void  tcvcoeff(int k)
 **--------------------------------------------------------------
 */
 {
-   float km;
+   double km;
 
    /* Save original loss coeff. for open valve */
    km = Link[k].Km;
@@ -2347,7 +2290,7 @@ void  tcvcoeff(int k)
        Link[k].Km = 0.02517*K[k]/(SQR(Link[k].Diam)*SQR(Link[k].Diam));
 
    /* Then apply usual pipe formulas */
-   pipecoeff(k);
+   valvecoeff(k);  //pipecoeff(k);                                             //(2.00.11 - LR)
 
    /* Restore original loss coeff. */
    Link[k].Km = km;
@@ -2367,8 +2310,7 @@ void  prvcoeff(int k, int n1, int n2)
 */
 {
    int   i,j;                       /* Rows of solution matrix */
-   float hset;                      /* Valve head setting      */
-
+   double hset;                      /* Valve head setting      */
    i  = Row[n1];                    /* Matrix rows of nodes    */
    j  = Row[n2];
    hset   = Node[n2].El + K[k];     /* Valve setting           */
@@ -2381,17 +2323,18 @@ void  prvcoeff(int k, int n1, int n2)
          newflows()) equal to flow imbalance at downstream node. 
       */
       P[k] = 0.0;
-      Y[k] = Q[k] + X[n2];          /* Force flow balance   */
+      Y[k] = Q[k] + X[n2];       /* Force flow balance   */
+      F[j] += (hset*CBIG);       /* Force head = hset    */
+      Aii[j] += CBIG;            /*   at downstream node */
       if (X[n2] < 0.0) F[i] += X[n2];
-      F[j] += (hset*CBIG);          /* Force head = hset    */
-      Aii[j] += CBIG;               /*   at downstream node */
       return;
    }
+
    /* 
       For OPEN, CLOSED, or XPRESSURE valve
-      compute matrix coeffs. using the pipecoeff() function.
+      compute matrix coeffs. using the valvecoeff() function.                  //(2.00.11 - LR)
    */
-   pipecoeff(k);
+   valvecoeff(k);  /*pipecoeff(k);*/                                           //(2.00.11 - LR)
    Aij[Ndx[k]] -= P[k];
    Aii[i] += P[k];
    Aii[j] += P[k];
@@ -2413,7 +2356,7 @@ void  psvcoeff(int k, int n1, int n2)
 */
 {
    int   i,j;                       /* Rows of solution matrix */
-   float hset;                      /* Valve head setting      */
+   double hset;                      /* Valve head setting      */
    i  = Row[n1];                    /* Matrix rows of nodes    */
    j  = Row[n2];
    hset   = Node[n1].El + K[k];     /* Valve setting           */
@@ -2435,9 +2378,9 @@ void  psvcoeff(int k, int n1, int n2)
 
    /* 
       For OPEN, CLOSED, or XPRESSURE valve
-      compute matrix coeffs. using the pipecoeff() function.
+      compute matrix coeffs. using the valvecoeff() function.                  //(2.00.11 - LR)
    */
-   pipecoeff(k);
+   valvecoeff(k);  /*pipecoeff(k);*/                                           //(2.00.11 - LR)
    Aij[Ndx[k]] -= P[k];
    Aii[i] += P[k];
    Aii[j] += P[k];
@@ -2459,8 +2402,7 @@ void  fcvcoeff(int k, int n1, int n2)
 */
 {
    int   i,j;                   /* Rows in solution matrix */
-   float q;                     /* Valve flow setting      */
-
+   double q;                     /* Valve flow setting      */
    q = K[k];
    i = Row[n1];
    j = Row[n2];
@@ -2476,15 +2418,11 @@ void  fcvcoeff(int k, int n1, int n2)
       F[i] -= q;
       X[n2] += q;
       F[j] += q;
-
-      /*** Updated 2/10/05 ***/
-      //P[k] = 0.0;
-      P[k] = 1.0/CBIG;
-      Aij[Ndx[k]] -= P[k];
-      Aii[i] += P[k];
-      Aii[j] += P[k];
-      /**********************/
-
+      /*P[k] = 0.0;*/
+      P[k] = 1.0/CBIG;                                                         //(2.00.11 - LR)
+      Aij[Ndx[k]] -= P[k];                                                     //(2.00.11 - LR)
+      Aii[i] += P[k];                                                          //(2.00.11 - LR)
+      Aii[j] += P[k];                                                          //(2.00.11 - LR)
       Y[k] = Q[k] - q;
    }
    /*
@@ -2492,7 +2430,7 @@ void  fcvcoeff(int k, int n1, int n2)
    */
    else 
    {
-      pipecoeff(k);
+      valvecoeff(k);  //pipecoeff(k);                                          //(2.00.11 - LR)
       Aij[Ndx[k]] -= P[k];
       Aii[i] += P[k];
       Aii[j] += P[k];
@@ -2500,6 +2438,43 @@ void  fcvcoeff(int k, int n1, int n2)
       F[j] -= (Y[k]-Q[k]);
    }
 }                        /* End of fcvcoeff */
+
+
+/*** New function added. ***/                                                  //(2.00.11 - LR)
+void valvecoeff(int k)
+/*
+**--------------------------------------------------------------
+**   Input:   k    = link index                                   
+**   Output:  none                                                
+**   Purpose: computes solution matrix coeffs. for a completely
+**            open, closed, or throttled control valve.                                               
+**--------------------------------------------------------------
+*/
+{
+   double p;
+
+   // Valve is closed. Use a very small matrix coeff.
+   if (S[k] <= CLOSED)
+   {
+      P[k] = 1.0/CBIG;
+      Y[k] = Q[k];
+      return;
+   }
+
+   // Account for any minor headloss through the valve
+   if (Link[k].Km > 0.0)
+   {
+      p = 2.0*Link[k].Km*fabs(Q[k]);
+      if ( p < RQtol ) p = RQtol;
+      P[k] = 1.0/p;
+      Y[k] = Q[k]/2.0;
+   }
+   else
+   {
+      P[k] = 1.0/RQtol;
+      Y[k] = Q[k];
+   }
+}
 
 /****************  END OF HYDRAUL.C  ***************/
 

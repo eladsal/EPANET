@@ -8,7 +8,7 @@ DATE:       5/8/00
             9/7/00
             10/25/00
             3/1/01
-            3/29/06                                          
+            8/15/07    (2.00.11)
 AUTHOR:     L. Rossman
             US EPA - NRMRL
                                                                     
@@ -40,7 +40,7 @@ struct      Premise         /* Rule Premise Clause */
    int      variable;       /* Pressure, flow, etc. */
    int      relop;          /* Relational operator */
    int      status;         /* Variable's status */
-   float    value;          /* Variable's value */
+   double    value;          /* Variable's value */
    struct   Premise *next;
 };
 
@@ -48,14 +48,14 @@ struct     Action           /* Rule Action Clause */
 {
    int     link;            /* Link index */
    int     status;          /* Link's status */
-   float   setting;         /* Link's setting */
+   double   setting;         /* Link's setting */
    struct  Action *next;
 };
 
 struct      aRule           /* Control Rule Structure */
 {
    char     label[MAXID+1];    /* Rule character label */
-   float    priority;          /* Priority level */
+   double    priority;          /* Priority level */
    struct   Premise  *Pchain;  /* Linked list of premises */
    struct   Action   *Tchain;  /* Linked list of actions if true */
    struct   Action   *Fchain;  /* Linked list of actions if false */
@@ -379,7 +379,7 @@ int  newpremise(int logop)
 */
 {
    int   i,j,k,m,r,s,v;
-   float x;
+   double x;
    struct Premise *p;
 
    /* Check for correct number of tokens */
@@ -472,9 +472,7 @@ int  newpremise(int logop)
    else
    {
       if (!getfloat(Tok[Ntokens-1],&x)) return(202);
-
-/*** Updated 3/29/06 ***/
-      if (v == r_FILLTIME || v == r_DRAINTIME) x = x*3600.0;
+      if (v == r_FILLTIME || v == r_DRAINTIME) x = x*3600.0;                   //(2.00.11 - LR)
    }
 
    
@@ -512,7 +510,7 @@ int  newaction()
 */
 {
    int   j,k,s;
-   float x;
+   double x;
    struct Action *a;
 
    /* Check for correct number of tokens */
@@ -578,7 +576,7 @@ int  newpriority()
 **---------------------------------------------------
 */
 {
-    float x;
+    double x;
     if (!getfloat(Tok[1],&x)) return(202);
     Rule[Nrules].priority = x;
     return(0);
@@ -724,7 +722,7 @@ int  checkvalue(struct Premise *p)
 */
 {
     int   i,j,v;
-    float x,
+    double x,
           tol = 1.e-3;
 
     i = p->index;
@@ -863,7 +861,7 @@ int  takeactions()
     struct ActItem *item;
     char   flag;
     int    k, s, n;
-    float  tol = 1.e-3,
+    double  tol = 1.e-3,
            v, x;
 
     n = 0;

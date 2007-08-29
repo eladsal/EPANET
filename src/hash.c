@@ -1,18 +1,22 @@
-//-----------------------------------------------------------------------------
-//   hash.c
-//
-//   Implementation of a simple Hash Table for string storage & retrieval
-//
-//   Written by L. Rossman
-//   Last Updated on 6/19/03
-//
-//   The hash table data structure (HTable) is defined in "hash.h".
-//   Interface Functions:
-//      HTcreate() - creates a hash table
-//      HTinsert() - inserts a string & its index value into a hash table
-//      HTfind()   - retrieves the index value of a string from a table
-//      HTfree()   - frees a hash table
-//-----------------------------------------------------------------------------
+/*-----------------------------------------------------------------------------
+**   hash.c
+**
+**   Implementation of a simple Hash Table for string storage & retrieval
+**
+**   Written by L. Rossman
+**   Last Updated on 6/19/03
+**
+**   The hash table data structure (HTable) is defined in "hash.h".
+**   Interface Functions:
+**      HTcreate() - creates a hash table
+**      HTinsert() - inserts a string & its index value into a hash table
+**      HTfind()   - retrieves the index value of a string from a table
+**      HTfree()   - frees a hash table
+**
+*********************************************************************
+**   NOTE:  This is a modified version of the original HASH.C module.
+*********************************************************************
+*/
 
 #include <malloc.h>
 #include <string.h>

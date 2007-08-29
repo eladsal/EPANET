@@ -3,7 +3,7 @@
 **
 ** C/C++ header file for EPANET Programmers Toolkit
 **
-** Last updated on 3/13/07
+** Last updated on 8/15/07 (2.00.11)
 */
 
 #ifndef EPANET2_H
@@ -109,7 +109,7 @@
 #define EN_TIMEOFDAY    3
 
 #define EN_AVERAGE      1   /* Time statistic types.    */
-#define EN_MINIMUM      2
+#define EN_MINIMUM      2 
 #define EN_MAXIMUM      3
 #define EN_RANGE        4
 
@@ -211,7 +211,5 @@
  int   DLLEXPORT ENsetoption(int, float);
  int   DLLEXPORT ENsetstatusreport(int);
  int   DLLEXPORT ENsetqualtype(int, char *, char *, char *);
-
- int   DLLEXPORT ENaddpattern(char *);
 
 #endif

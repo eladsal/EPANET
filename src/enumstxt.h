@@ -4,7 +4,7 @@
 ENUMSTXT.H -- Text strings for enumerated data types in EPANET  
                                                                      
 VERSION:    2.00                                               
-DATE:       5/8/00                                           
+DATE:       5/8/00
 AUTHOR:     L. Rossman                                         
             US EPA - NRMRL
                                                                      
@@ -43,9 +43,6 @@ char *FormTxt[]         = {w_HW,
 char *RptFormTxt[]      = {t_HW,
                            t_DW,
                            t_CM};
-
-char *RptIgrateTxt[]    = {w_STANDARD,                                         /*** Added 1/24/07 ***/
-                           w_MODIFIED};                                        /*** Added 1/24/07 ***/
 
 char *RptFlowUnitsTxt[] = {u_CFS,
                            u_GPM,

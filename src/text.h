@@ -1,16 +1,15 @@
 /*
 ****************************************************
 
-      String Constants for EPANET Program
-
-VERSION:    2.00
+      String Constants for EPANET Program                            
+                                                                     
+VERSION:    2.00                                               
 DATE:       5/8/00
             10/25/00
-            12/13/06
-            1/24/07
+            8/15/07     (2.00.11)
 AUTHOR:     L. Rossman
             US EPA - NRMRL
-
+                                                                     
 ****************************************************
 */
 /* ------------ Keyword Dictionary ---------- */
@@ -129,10 +128,6 @@ AUTHOR:     L. Rossman
 #define   w_SEGMENTS    "SEGM"
 #define   w_TOLERANCE   "TOLER"
 #define   w_EMITTER     "EMIT"
-#define   w_ADJUSTOR    "ADJUST"                                               /*** Added 12/13/06 ***/
-#define   w_INTEGRATION "INTEGR"                                               /*** Added 1/24/07 ***/
-#define   w_STANDARD    "STANDARD"                                             /*** Added 1/24/07 ***/
-#define   w_MODIFIED    "MODIFIED"                                             /*** Added 1/24/07 ***/
 
 #define   w_PRICE       "PRICE"
 #define   w_DMNDCHARGE  "DEMAN"
@@ -333,7 +328,7 @@ AUTHOR:     L. Rossman
 #define LOGO4  \
 "*                   Analysis for Pipe Networks                   *"
 #define LOGO5  \
-"*                           Version 2.0                          *"
+"*                         Version 2.00.11                        *"           //(2.00.11 - LR)
 #define LOGO6  \
 "******************************************************************"
 #define FMT01  "\n... EPANET Version 2.0\n"
@@ -360,7 +355,6 @@ AUTHOR:     L. Rossman
 #define FMT23  "    Number of Pumps ................... %-d"
 #define FMT24  "    Number of Valves .................. %-d"
 #define FMT25  "    Headloss Formula .................. %s"
-#define FMT25a "    Integration Method ................ %s EULER"              /*** Added 1/24/07 ***/
 #define FMT26  "    Hydraulic Timestep ................ %-.2f %s"
 #define FMT27  "    Hydraulic Accuracy ................ %-.6f"
 #define FMT28  "    Maximum Trials .................... %-d"
@@ -485,7 +479,6 @@ AUTHOR:     L. Rossman
 #define ERR241 "Input Error 241: %s %s refers to undefined control."
 #define ERR250 "Input Error 250: function call contains invalid format."
 #define ERR251 "Input Error 251: function call contains invalid parameter code."
-#define ERR252 "Input Error 252: function call contains invalid pattern id."
 
 #define ERR301 "File Error 301: identical file names."
 #define ERR302 "File Error 302: cannot open input file."
@@ -511,7 +504,7 @@ AUTHOR:     L. Rossman
 "WARNING: Maximum trials exceeded at %s hrs. System may be unstable."
 #define WARN03a "WARNING: Node %s disconnected at %s hrs"
 #define WARN03b "WARNING: %d additional nodes disconnected at %s hrs"
-#define WARN03c "WARNING: System disconnected because of Link %s"
+#define WARN03c "WARNING: System disconnected because of Link %s" 
 #define WARN04  "WARNING: Pump %s %s at %s hrs."
 #define WARN05  "WARNING: %s %s %s at %s hrs."
 #define WARN06  "WARNING: Negative pressures at %s hrs."
@@ -523,3 +516,4 @@ AUTHOR:     L. Rossman
 #define WARN4 "WARNING: Pumps cannot deliver enough flow or head."
 #define WARN5 "WARNING: Valves cannot deliver enough flow."
 #define WARN6 "WARNING: System has negative pressures."
+
