@@ -1,20 +1,20 @@
 /*
 *********************************************************************
-                                                                   
-INPFILE.C -- Save Input Function for EPANET Program                
-                                                                    
-VERSION:    2.00                                               
+
+INPFILE.C -- Save Input Function for EPANET Program
+
+VERSION:    2.00
 DATE:       5/8/00
             3/1/01
-            11/19/01                                          
+            11/19/01
             6/24/02
             8/15/07    (2.00.11)
 AUTHOR:     L. Rossman
             US EPA - NRMRL
-                                                                    
+
 This module contains the function saveinpfile() which saves the
-data describing a piping network to a file in EPANET's text format.                                    
-                                                                    
+data describing a piping network to a file in EPANET's text format.
+
 ********************************************************************
 */
 
@@ -22,7 +22,7 @@ data describing a piping network to a file in EPANET's text format.
 #include <string.h>
 #include <malloc.h>
 #include <math.h>
-#include "hash.h"    
+#include "hash.h"
 #include "text.h"
 #include "types.h"
 #include "funcs.h"
@@ -47,7 +47,7 @@ extern char *SectTxt[];
 void  savemapinfo(FILE *ftmp)
 {
    int   sect,newsect;
-   char  *tok; 
+   char  *tok;
    char  line[MAXLINE+1];
    char  s[MAXLINE+1];
 
@@ -300,7 +300,7 @@ int  saveinpfile(char *fname)
    }
 
 /* Write [DEMANDS] section */
-   
+
    fprintf(f, "\n\n[DEMANDS]");
 
 /*** Updated 11/19/01 ***/
@@ -406,7 +406,7 @@ int  saveinpfile(char *fname)
          }
          sprintf(s, " LINK %s %.4f",Link[j].ID, kc);
       }
-      
+
       switch (Control[i].Type)
       {
       /* Print level control */
@@ -425,14 +425,14 @@ int  saveinpfile(char *fname)
             fprintf(f, "\n%s AT %s %.2f HOURS",
                s, ControlTxt[TIMER], Control[i].Time/3600.);
             break;
-                         
+
       /* Print time-of-day control */
          case TIMEOFDAY:
             fprintf(f, "\n%s AT %s %s",
                s, ControlTxt[TIMEOFDAY], clocktime(Atime, Control[i].Time));
             break;
       }
-   }            
+   }
 
 /* Write [QUALITY] section */
 /* (Skip nodes with default quality of 0) */
@@ -443,7 +443,7 @@ int  saveinpfile(char *fname)
       if (Node[i].C0 == 0.0) continue;
       fprintf(f, "\n %-15s %12.3f",Node[i].ID,Node[i].C0*Ucf[QUALITY]);
    }
-      
+
 /* Write [SOURCES] section */
 
    fprintf(f, "\n\n[SOURCES]");
@@ -481,7 +481,7 @@ int  saveinpfile(char *fname)
    fprintf(f, "\n ORDER  TANK            %-.2f", TankOrder);
    fprintf(f, "\n GLOBAL BULK            %-.4f", Kbulk*SECperDAY);
    fprintf(f, "\n GLOBAL WALL            %-.4f", Kwall*SECperDAY);
-   if (Climit > 0.0) 
+   if (Climit > 0.0)
    fprintf(f, "\n LIMITING POTENTIAL     %-.4f", Climit);
    if (Rfactor != MISSING && Rfactor != 0.0)
    fprintf(f, "\n ROUGHNESS CORRELATION  %-.4f",Rfactor);
@@ -522,7 +522,7 @@ int  saveinpfile(char *fname)
 /*** Updated 3/1/01 ***/
       if (Pump[i].Ecurve > 0.0)
          fprintf(f, "\n PUMP %-15s EFFIC   %s",
-            Link[Pump[i].Link].ID,Curve[Pump[i].Ecurve].ID); 
+            Link[Pump[i].Link].ID,Curve[Pump[i].Ecurve].ID);
    }
 
 /* Write [TIMES] section */
@@ -543,18 +543,18 @@ int  saveinpfile(char *fname)
 
    fprintf(f, "\n\n[OPTIONS]");
    fprintf(f, "\n UNITS               %s", FlowUnitsTxt[Flowflag]);
-   fprintf(f, "\n PRESSURE            %s", PressUnitsTxt[Pressflag]);                          
+   fprintf(f, "\n PRESSURE            %s", PressUnitsTxt[Pressflag]);
    fprintf(f, "\n HEADLOSS            %s", FormTxt[Formflag]);
    if (DefPat >= 1 && DefPat <= Npats)
    fprintf(f, "\n PATTERN             %s", Pattern[DefPat].ID);
-   if (Hydflag == USE)                        
+   if (Hydflag == USE)
    fprintf(f, "\n HYDRAULICS USE      %s", HydFname);
    if (Hydflag == SAVE)
    fprintf(f, "\n HYDRAULICS SAVE     %s", HydFname);
    if (ExtraIter == -1)
    fprintf(f, "\n UNBALANCED          STOP");
    if (ExtraIter >= 0)
-   fprintf(f, "\n UNBALANCED          CONTINUE %d", ExtraIter); 
+   fprintf(f, "\n UNBALANCED          CONTINUE %d", ExtraIter);
    if (Qualflag == CHEM)
    fprintf(f, "\n QUALITY             %s %s", ChemName, ChemUnits);
    if (Qualflag == TRACE)
@@ -568,11 +568,11 @@ int  saveinpfile(char *fname)
 /*** Updated 11/19/01 ***/
    fprintf(f, "\n EMITTER EXPONENT    %-.2f", 1.0/Qexp);
 
-   fprintf(f, "\n VISCOSITY           %-.4f", Viscos/VISCOS);                                  
-   fprintf(f, "\n DIFFUSIVITY         %-.4f", Diffus/DIFFUS);                                  
-   fprintf(f, "\n SPECIFIC GRAVITY    %-.4f", SpGrav);                                  
-   fprintf(f, "\n TRIALS              %-d",   MaxIter);                                  
-   fprintf(f, "\n ACCURACY            %-.8f", Hacc);                                  
+   fprintf(f, "\n VISCOSITY           %-.4f", Viscos/VISCOS);
+   fprintf(f, "\n DIFFUSIVITY         %-.4f", Diffus/DIFFUS);
+   fprintf(f, "\n SPECIFIC GRAVITY    %-.4f", SpGrav);
+   fprintf(f, "\n TRIALS              %-d",   MaxIter);
+   fprintf(f, "\n ACCURACY            %-.8f", Hacc);
    fprintf(f, "\n TOLERANCE           %-.8f", Ctol*Ucf[QUALITY]);
 
 /* Write [REPORT] section */
@@ -622,7 +622,7 @@ int  saveinpfile(char *fname)
          }
       }
    }
-   for (i=0; i<MAXVAR; i++)
+   for (i=0; i<=FRICTION; i++)
    {
 /*** Updated ********************************************************/         //(2.00.11 - LR)
       if (Field[i].Enabled == TRUE)
@@ -645,11 +645,10 @@ int  saveinpfile(char *fname)
       fseek(ftmp, 0, SEEK_SET);
       while ( (j = fgetc(ftmp)) != EOF ) fputc(j, f);
       fclose(ftmp);
-   } 
-/*****************************************************/   
+   }
+/*****************************************************/
 
    fprintf(f, "\n\n[END]");
    fclose(f);
    return(0);
 }
-
