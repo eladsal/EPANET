@@ -1,7 +1,8 @@
-#include "types.h"
-#include "vars.h"
-#include "funcs.h"
 #include "toolkit.h"
+#include "types.h"
+#include "funcs.h"
+#define  EXTERN  extern
+#include "vars.h"
 
 extern char OutOfMemory;
 extern int Haltflag;
