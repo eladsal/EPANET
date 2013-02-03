@@ -2,9 +2,9 @@
  The extension enables syncronized computation of hydraulics
  and water quality */
 
-#include <stdio.h>
-#include "types.h"
-#include "vars.h"
+//#include <stdio.h>
+//#include "types.h"
+//#include "vars.h"
 #include "lemontiger.h"
 
 
@@ -15,7 +15,7 @@ int main(int argc, char* argv[]) {
 	char* f1 = argv[1];
   char* f2 = argv[2];
   LTtest(f1, f2);
-  en2test(f1, f2);
+  //en2test(f1, f2);
   return 0;
 
 }
@@ -35,6 +35,12 @@ int LTtest(char* f1, char* f2){
 	printf("\n\n*****LemonTiger results******\n\n");
   
 	if (err=ENopen(f1, f2, "")) return err;
+  long Dur;
+  ENgettimeparam(EN_DURATION, &Dur);
+
+  ENgetnodeindex("184", &id);  // a node far away from water source
+	ENgetlinkindex("101", &id2);  // a link close to the lake
+	ENgetnodeindex("199", &id3);  // a node close to the lake (tracer point)
   
 	for (ENopeninitHQ(), tleft=Dur; tleft>0; ) {
     
