@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include "types.h"
 #include "vars.h"
-#include "lemontiger.h"
+#include "toolkit.h"
 
 
 #ifdef CLE_LT

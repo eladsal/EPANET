@@ -117,7 +117,13 @@ xcuserdata
 *.metagen
 *.bi
 *.opensdf
+*.dll
+*.lib
+*.log
 test/*
+Debug/*
+Release/*
+Debug
 
 
 

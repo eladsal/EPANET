@@ -23,8 +23,8 @@ AUTHOR:     L. Rossman
 //#define SOL     /* Compile as a shared object library */
 //#define DLL       /* Compile as a Windows DLL */
 
-//#define CLE_LT    /* LemonTiger test */       //Jinduan Chen
-#define DLL_LT    /* Compile as a Windows DLL of LemonTiger */
+#define CLE_LT    /* LemonTiger test */       //Jinduan Chen
+//#define DLL_LT    /* Compile as a Windows DLL of LemonTiger */
 
 #define DLLEXPORT __declspec(dllexport) 
 
