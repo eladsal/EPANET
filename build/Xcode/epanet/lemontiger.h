@@ -7,9 +7,9 @@ all original Epanet functions remain intact, and the new LT_functions are added.
 /*Note that this file is not used by the functions in the toolkit itself.
 Refer to toolkit.h for the internally used function declarations. */
 #ifdef __APPLE__
-  #define DLLIMPORT 
+  #define DLLEXPORT 
 #else
-  #define DLLIMPORT __declspec(dllimport) 
+  #define DLLEXPORT __declspec(DLLEXPORT) 
 #endif
 // --- Define the EPANET toolkit constants
 
@@ -142,91 +142,91 @@ Refer to toolkit.h for the internally used function declarations. */
 extern "C" {
 #endif
 
- int   DLLIMPORT ENepanet(char *, char *, char *, void (*) (char *));
- int   DLLIMPORT ENopen(char *, char *, char *);
- int   DLLIMPORT ENsaveinpfile(char *);
- int   DLLIMPORT ENclose(void);
+ int   DLLEXPORT ENepanet(char *, char *, char *, void (*) (char *));
+ int   DLLEXPORT ENopen(char *, char *, char *);
+ int   DLLEXPORT ENsaveinpfile(char *);
+ int   DLLEXPORT ENclose(void);
 
- int   DLLIMPORT ENsolveH(void);
- int   DLLIMPORT ENsaveH(void);
- int   DLLIMPORT ENopenH(void);
- int   DLLIMPORT ENinitH(int);
- int   DLLIMPORT ENrunH(long *);
- int   DLLIMPORT ENnextH(long *);
- int   DLLIMPORT ENcloseH(void);
- int   DLLIMPORT ENsavehydfile(char *);
- int   DLLIMPORT ENusehydfile(char *);
+ int   DLLEXPORT ENsolveH(void);
+ int   DLLEXPORT ENsaveH(void);
+ int   DLLEXPORT ENopenH(void);
+ int   DLLEXPORT ENinitH(int);
+ int   DLLEXPORT ENrunH(long *);
+ int   DLLEXPORT ENnextH(long *);
+ int   DLLEXPORT ENcloseH(void);
+ int   DLLEXPORT ENsavehydfile(char *);
+ int   DLLEXPORT ENusehydfile(char *);
 
- int   DLLIMPORT ENsolveQ(void);
- int   DLLIMPORT ENopenQ(void);
- int   DLLIMPORT ENinitQ(int);
- int   DLLIMPORT ENrunQ(long *);
- int   DLLIMPORT ENnextQ(long *);
- int   DLLIMPORT ENstepQ(long *);
- int   DLLIMPORT ENcloseQ(void);
+ int   DLLEXPORT ENsolveQ(void);
+ int   DLLEXPORT ENopenQ(void);
+ int   DLLEXPORT ENinitQ(int);
+ int   DLLEXPORT ENrunQ(long *);
+ int   DLLEXPORT ENnextQ(long *);
+ int   DLLEXPORT ENstepQ(long *);
+ int   DLLEXPORT ENcloseQ(void);
 
- int   DLLIMPORT ENwriteline(char *);
- int   DLLIMPORT ENreport(void);
- int   DLLIMPORT ENresetreport(void);
- int   DLLIMPORT ENsetreport(char *);
+ int   DLLEXPORT ENwriteline(char *);
+ int   DLLEXPORT ENreport(void);
+ int   DLLEXPORT ENresetreport(void);
+ int   DLLEXPORT ENsetreport(char *);
 
- int   DLLIMPORT ENgetcontrol(int, int *, int *, float *,
+ int   DLLEXPORT ENgetcontrol(int, int *, int *, float *,
                       int *, float *);
- int   DLLIMPORT ENgetcount(int, int *);
- int   DLLIMPORT ENgetoption(int, float *);
- int   DLLIMPORT ENgettimeparam(int, long *);
- int   DLLIMPORT ENgetflowunits(int *);
- int   DLLIMPORT ENgetpatternindex(char *, int *);
- int   DLLIMPORT ENgetpatternid(int, char *);
- int   DLLIMPORT ENgetpatternlen(int, int *);
- int   DLLIMPORT ENgetpatternvalue(int, int, float *);
- int   DLLIMPORT ENgetqualtype(int *, int *);
- int   DLLIMPORT ENgeterror(int, char *, int);
+ int   DLLEXPORT ENgetcount(int, int *);
+ int   DLLEXPORT ENgetoption(int, float *);
+ int   DLLEXPORT ENgettimeparam(int, long *);
+ int   DLLEXPORT ENgetflowunits(int *);
+ int   DLLEXPORT ENgetpatternindex(char *, int *);
+ int   DLLEXPORT ENgetpatternid(int, char *);
+ int   DLLEXPORT ENgetpatternlen(int, int *);
+ int   DLLEXPORT ENgetpatternvalue(int, int, float *);
+ int   DLLEXPORT ENgetqualtype(int *, int *);
+ int   DLLEXPORT ENgeterror(int, char *, int);
 
- int   DLLIMPORT ENgetnodeindex(char *, int *);
- int   DLLIMPORT ENgetnodeid(int, char *);
- int   DLLIMPORT ENgetnodetype(int, int *);
- int   DLLIMPORT ENgetnodevalue(int, int, float *);
+ int   DLLEXPORT ENgetnodeindex(char *, int *);
+ int   DLLEXPORT ENgetnodeid(int, char *);
+ int   DLLEXPORT ENgetnodetype(int, int *);
+ int   DLLEXPORT ENgetnodevalue(int, int, float *);
 
- int   DLLIMPORT ENgetnumdemands(int, int *);
- int   DLLIMPORT ENgetbasedemand(int, int, float *);
- int   DLLIMPORT ENgetdemandpattern(int, int, int *);
+ int   DLLEXPORT ENgetnumdemands(int, int *);
+ int   DLLEXPORT ENgetbasedemand(int, int, float *);
+ int   DLLEXPORT ENgetdemandpattern(int, int, int *);
 
- int   DLLIMPORT ENgetlinkindex(char *, int *);
- int   DLLIMPORT ENgetlinkid(int, char *);
- int   DLLIMPORT ENgetlinktype(int, int *);
- int   DLLIMPORT ENgetlinknodes(int, int *, int *);
- int   DLLIMPORT ENgetlinkvalue(int, int, float *);
+ int   DLLEXPORT ENgetlinkindex(char *, int *);
+ int   DLLEXPORT ENgetlinkid(int, char *);
+ int   DLLEXPORT ENgetlinktype(int, int *);
+ int   DLLEXPORT ENgetlinknodes(int, int *, int *);
+ int   DLLEXPORT ENgetlinkvalue(int, int, float *);
   
- int   DLLIMPORT ENgetcurve(int curveIndex, int *nValues, float **xValues, float **yValues);
+ int   DLLEXPORT ENgetcurve(int curveIndex, int *nValues, float **xValues, float **yValues);
   
- int   DLLIMPORT ENgetversion(int *);
+ int   DLLEXPORT ENgetversion(int *);
 
- int   DLLIMPORT ENsetcontrol(int, int, int, float, int, float);
- int   DLLIMPORT ENsetnodevalue(int, int, float);
- int   DLLIMPORT ENsetlinkvalue(int, int, float);
- int   DLLIMPORT ENaddpattern(char *);
- int   DLLIMPORT ENsetpattern(int, float *, int);
- int   DLLIMPORT ENsetpatternvalue(int, int, float);
- int   DLLIMPORT ENsettimeparam(int, long);
- int   DLLIMPORT ENsetoption(int, float);
- int   DLLIMPORT ENsetstatusreport(int);
- int   DLLIMPORT ENsetqualtype(int, char *, char *, char *);
+ int   DLLEXPORT ENsetcontrol(int, int, int, float, int, float);
+ int   DLLEXPORT ENsetnodevalue(int, int, float);
+ int   DLLEXPORT ENsetlinkvalue(int, int, float);
+ int   DLLEXPORT ENaddpattern(char *);
+ int   DLLEXPORT ENsetpattern(int, float *, int);
+ int   DLLEXPORT ENsetpatternvalue(int, int, float);
+ int   DLLEXPORT ENsettimeparam(int, long);
+ int   DLLEXPORT ENsetoption(int, float);
+ int   DLLEXPORT ENsetstatusreport(int);
+ int   DLLEXPORT ENsetqualtype(int, char *, char *, char *);
 
  //LemonTiger functions
  /* See testLT.c for a LemonTiger test */
 
 	//LT equivalent to ENopenH() + ENopenQ() + ENinitH() + ENinitQ()
-	int DLLIMPORT ENopeninitHQ();
+	int DLLEXPORT ENopeninitHQ();
 
 	//LT equivalent to ENrunQ() + ENnextQ();
-	int DLLIMPORT ENrunnextHQ(long*, long*);
+	int DLLEXPORT ENrunnextHQ(long*, long*);
 
 	//LT equivalent to ENrunQ() + ENstepQ();
-	int DLLIMPORT ENrunstepHQ(long*, long*);
+	int DLLEXPORT ENrunstepHQ(long*, long*);
 
 	//LT equivalent to ENcloseH() + ENcloseQ();
-	int DLLIMPORT ENcloseHQ();
+	int DLLEXPORT ENcloseHQ();
 
 
 #ifdef __cplusplus

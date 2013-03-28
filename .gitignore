@@ -124,5 +124,3 @@ build/MSVS/*
 !build/MSVS/*.sln
 !build/MSVS/*.vcxproj
 
-
-
