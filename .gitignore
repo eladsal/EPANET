@@ -120,10 +120,9 @@ xcuserdata
 *.dll
 *.lib
 *.log
-test/*
-Debug/*
-Release/*
-Debug
+build/MSVS/*
+!build/MSVS/*.sln
+!build/MSVS/*.vcxproj
 
 
 
