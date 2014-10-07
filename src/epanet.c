@@ -107,6 +107,8 @@ execute function x and set the error code equal to its return value.
 *******************************************************************************
 */
 
+#define DLL       /* Compile as a Windows DLL */
+
 /*** Need to define WINDOWS to use the getTmpName function ***/                //(2.00.12 - LR)
 // --- define WINDOWS
 #undef WINDOWS
@@ -1794,6 +1796,7 @@ int  DLLEXPORT ENgetcurve(int curveIndex, char* id, int *nValues, EN_API_FLOAT_T
     pointY[iPoint] = (EN_API_FLOAT_TYPE)y;
   }
   
+  strncpy(id,"", MAXID);
   strncpy(id, curve.ID, MAXID);
   *nValues = nPoints;
   *xValues = pointX;
@@ -3347,11 +3350,12 @@ int DLLEXPORT ENgetaveragepatternvalue(int index, EN_API_FLOAT_TYPE *value)
  **           and pattern
  **----------------------------------------------------------------
  */
-{  *value = 0.0;
+{ 
+  int i;
+  *value = 0.0;
   if (!Openflag) return(102);
   if (index < 1 || index > Npats) return(205);
   //if (period < 1 || period > Pattern[index].Length) return(251);
-  int i;
   for (i=0; i<Pattern[index].Length; i++) {
     *value+=Pattern[index].F[i];
   }
